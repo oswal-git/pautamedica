@@ -1,0 +1,219 @@
+{
+  // Tema de alto contraste
+  "workbench.colorTheme": "Default High Contrast",
+
+  // Configuración de colores personalizados para máximo contraste
+  "workbench.colorCustomizations": {
+    // Fondo del editor
+    "editor.background": "#000000",
+    "editor.foreground": "#FFFFFF",
+
+    // Línea actual
+    "editor.lineHighlightBackground": "#1A1A1A",
+    "editor.lineHighlightBorder": "#333333",
+
+    // Selección
+    "editor.selectionBackground": "#264F78",
+    "editor.selectionHighlightBackground": "#1A1A1A",
+
+    // Búsqueda
+    "editor.findMatchBackground": "#515C6A",
+    "editor.findMatchHighlightBackground": "#3A3D41",
+
+    // Errores y warnings
+    "editorError.foreground": "#F44747",
+    "editorWarning.foreground": "#FFCC02",
+    "editorInfo.foreground": "#75BEFF",
+
+    // Sidebar
+    "sideBar.background": "#1E1E1E",
+    "sideBar.foreground": "#FFFFFF",
+    "sideBarTitle.foreground": "#FFFFFF",
+
+    // Barra de estado
+    "statusBar.background": "#007ACC",
+    "statusBar.foreground": "#FFFFFF",
+
+    // Barra de actividad
+    "activityBar.background": "#333333",
+    "activityBar.foreground": "#FFFFFF",
+    "activityBar.activeBorder": "#FFFFFF",
+
+    // Panel de terminal
+    "terminal.background": "#000000",
+    "terminal.foreground": "#FFFFFF",
+
+    // Tabs
+    "tab.activeBackground": "#1E1E1E",
+    "tab.inactiveBackground": "#2D2D2D",
+    "tab.activeForeground": "#FFFFFF",
+    "tab.inactiveForeground": "#CCCCCC",
+
+    // 🎨 COLORES PERSONALIZADOS PARA EL CHAT DE CURSOR
+    // Panel principal del chat
+    "chat.editorBackground": "#000000",
+    "chat.editorForeground": "#FFFFFF",
+
+    // Área de entrada del chat
+    "chat.inputBackground": "#1A1A1A",
+    "chat.inputBorder": "#333333",
+    "chat.inputForeground": "#FFFFFF",
+    "chat.inputPlaceholderForeground": "#888888",
+
+    // Botón de envío del chat
+    "chat.sendButtonBackground": "#007ACC",
+    "chat.sendButtonForeground": "#FFFFFF",
+    "chat.sendButtonHoverBackground": "#005A9E",
+
+    // Mensajes del usuario (inputs)
+    "chat.userMessageBackground": "#1E3A5F",
+    "chat.userMessageForeground": "#FFFFFF",
+    "chat.userMessageBorder": "#264F78",
+
+    // Mensajes del asistente (outputs)
+    "chat.assistantMessageBackground": "#2D2D2D",
+    "chat.assistantMessageForeground": "#FFFFFF",
+    "chat.assistantMessageBorder": "#444444",
+
+    // Código en los mensajes del chat
+    "chat.codeBlockBackground": "#1A1A1A",
+    "chat.codeBlockForeground": "#FFFFFF",
+    "chat.codeBlockBorder": "#333333",
+
+    // Enlaces en el chat
+    "chat.linkForeground": "#75BEFF",
+    "chat.linkHoverForeground": "#4A9EFF",
+
+    // Botones de acción del chat
+    "chat.actionButtonBackground": "#333333",
+    "chat.actionButtonForeground": "#FFFFFF",
+    "chat.actionButtonHoverBackground": "#444444",
+
+    // Scrollbar del chat
+    "chat.scrollbarBackground": "#333333",
+    "chat.scrollbarSliderBackground": "#666666",
+    "chat.scrollbarSliderHoverBackground": "#888888",
+
+    // Separadores entre mensajes
+    "chat.separatorBackground": "#333333",
+
+    // Indicadores de estado
+    "chat.statusBackground": "#1A1A1A",
+    "chat.statusForeground": "#888888",
+
+    // Tooltips del chat
+    "chat.tooltipBackground": "#1E1E1E",
+    "chat.tooltipForeground": "#FFFFFF",
+    "chat.tooltipBorder": "#333333"
+  },
+
+  // Configuración de tipografía
+  "editor.fontFamily": "Consolas, 'Courier New', monospace",
+  "editor.fontSize": 14,
+  "editor.fontWeight": "normal",
+  "editor.lineHeight": 1.5,
+
+  // Configuración del editor
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.wordWrap": "on",
+  "editor.lineNumbers": "on",
+  "editor.rulers": [80, 120],
+  "editor.minimap.enabled": true,
+  "editor.minimap.maxColumn": 120,
+  "editor.minimap.renderCharacters": false,
+  "editor.minimap.showSlider": "always",
+
+  // Configuración de scrollbar
+  "editor.scrollbar.vertical": "visible",
+  "editor.scrollbar.horizontal": "visible",
+  "editor.scrollbar.verticalScrollbarSize": 14,
+  "editor.scrollbar.horizontalScrollbarSize": 14,
+
+  // Configuración de bracket matching
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.guides.highlightActiveIndentGuide": true,
+  "editor.guides.indentation": true,
+
+  // Configuración del cursor
+  "editor.cursorStyle": "line",
+  "editor.cursorWidth": 2,
+  "editor.cursorBlinking": "blink",
+
+  // Configuración de autocompletado
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+  "editor.suggest.showKeywords": true,
+  "editor.suggest.showSnippets": true,
+  "editor.suggest.showClasses": true,
+  "editor.suggest.showFunctions": true,
+  "editor.suggest.showVariables": true,
+  "editor.suggest.showConstants": true,
+  "editor.suggest.showEnums": true,
+  "editor.suggest.showModules": true,
+  "editor.suggest.showProperties": true,
+  "editor.suggest.showEvents": true,
+  "editor.suggest.showOperators": true,
+  "editor.suggest.showUnits": true,
+  "editor.suggest.showValues": true,
+  "editor.suggest.showColors": true,
+  "editor.suggest.showFiles": true,
+  "editor.suggest.showReferences": true,
+  "editor.suggest.showFolders": true,
+  "editor.suggest.showTypeParameters": true,
+  "editor.suggest.showWords": true,
+  "editor.suggest.showUsers": true,
+  "editor.suggest.showIssues": true,
+
+  // Configuración de Flutter/Dart
+  "dart.lineLength": 80,
+  "dart.enableSdkFormatter": true,
+  "dart.showTodos": true,
+
+  // Configuración de archivos
+  "files.autoSave": "onFocusChange",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // Configuración de búsqueda
+  "search.showLineNumbers": true,
+  "search.useGlobalIgnoreFiles": true,
+
+  // Configuración de Git
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+
+  // Configuración de extensiones
+  "extensions.ignoreRecommendations": false,
+  "extensions.autoUpdate": true,
+
+  // 🎨 CONFIGURACIÓN ESPECÍFICA DEL CHAT DE CURSOR
+  // Configuración de la interfaz del chat
+  "chat.editor.fontSize": 14,
+  "chat.editor.fontFamily": "Consolas, 'Courier New', monospace",
+  "chat.editor.lineHeight": 1.6,
+
+  // Configuración de la entrada del chat
+  "chat.input.fontSize": 14,
+  "chat.input.fontFamily": "Consolas, 'Courier New', monospace",
+  "chat.input.padding": 12,
+
+  // Configuración de los mensajes
+  "chat.message.padding": 16,
+  "chat.message.margin": 8,
+  "chat.message.borderRadius": 8,
+
+  // Configuración de bloques de código
+  "chat.codeBlock.padding": 12,
+  "chat.codeBlock.borderRadius": 6,
+  "chat.codeBlock.fontSize": 13,
+
+  // Configuración de scroll
+  "chat.scrollBehavior": "smooth",
+  "chat.autoScroll": true
+}

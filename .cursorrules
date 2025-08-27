@@ -1,0 +1,73 @@
+# Configuración de Cursor para máximo contraste
+# Este archivo configura el editor Cursor para tener el máximo contraste posible
+
+# Tema recomendado
+theme: "High Contrast"
+
+# Configuración de colores para máximo contraste
+colors:
+  # Fondo del editor - Negro puro para máximo contraste
+  editor.background: "#000000"
+  editor.foreground: "#FFFFFF"
+
+  # Línea actual - Gris muy oscuro
+  editor.lineHighlightBackground: "#1A1A1A"
+  editor.lineHighlightBorder: "#333333"
+
+  # Selección - Azul oscuro para destacar
+  editor.selectionBackground: "#264F78"
+  editor.selectionHighlightBackground: "#1A1A1A"
+
+  # Búsqueda - Gris medio para visibilidad
+  editor.findMatchBackground: "#515C6A"
+  editor.findMatchHighlightBackground: "#3A3D41"
+
+  # Errores y warnings - Colores vibrantes
+  editorError.foreground: "#F44747"
+  editorWarning.foreground: "#FFCC02"
+  editorInfo.foreground: "#75BEFF"
+
+# Configuración de tipografía para mejor legibilidad
+typography:
+  fontFamily: "Consolas, 'Courier New', monospace"
+  fontSize: 14
+  fontWeight: "normal"
+  lineHeight: 1.5
+
+# Configuración del editor para desarrollo Flutter
+editor:
+  tabSize: 2
+  insertSpaces: true
+  detectIndentation: false
+  wordWrap: "on"
+  lineNumbers: "on"
+  rulers: [80, 120]
+
+# Configuración de bracket matching y guías
+bracketPairColorization:
+  enabled: true
+  independentColorPoolPerBracketType: true
+
+guides:
+  indentation: true
+  bracketPairs: true
+  highlightActiveIndentGuide: true
+
+# Configuración del cursor
+cursor:
+  style: "line"
+  width: 2
+  blinkRate: 530
+
+# Configuración de minimap
+minimap:
+  enabled: true
+  maxColumn: 120
+  renderCharacters: false
+  showSlider: "always"
+
+# Configuración de scrollbar
+scrollbar:
+  vertical: "visible"
+  horizontal: "visible"
+  scrollbarSize: 14
