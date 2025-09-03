@@ -67,7 +67,7 @@ class NotificationService {
     final reminderTimes = [
       dose.time.add(const Duration(hours: 1)),
       dose.time.add(const Duration(hours: 2)),
-      DateTime(dose.time.year, dose.time.month, dose.time.day + 1),
+      dose.time.add(const Duration(hours: 3)),
     ];
 
     for (int i = 0; i < reminderTimes.length; i++) {
@@ -81,11 +81,22 @@ class NotificationService {
         );
       }
     }
+
+    // Midnight reminder
+    final midnightOfNextDay = DateTime(dose.time.year, dose.time.month, dose.time.day + 1);
+    if (midnightOfNextDay.isAfter(now)) {
+      await scheduleNotification(
+        id: dose.id.hashCode + 4, // Use a unique ID for midnight reminder
+        title: 'Recordatorio final de medicación',
+        body: 'Último recordatorio para ${dose.medicationName}',
+        scheduledTime: midnightOfNextDay,
+      );
+    }
   }
 
   Future<void> cancelDoseNotifications(String doseId) async {
-    // Cancel initial notification and 3 reminders
-    for (int i = 0; i < 4; i++) {
+    // Cancel initial notification and 4 reminders (3 hourly + 1 midnight)
+    for (int i = 0; i < 5; i++) {
       await flutterLocalNotificationsPlugin.cancel(doseId.hashCode + i);
     }
     print("Notificaciones canceladas para la dosis con ID base: ${doseId.hashCode}");
