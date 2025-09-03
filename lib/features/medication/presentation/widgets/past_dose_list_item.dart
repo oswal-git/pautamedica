@@ -22,9 +22,9 @@ class PastDoseListItem extends StatelessWidget {
   Widget _getStatusIcon(DoseStatus status) {
     switch (status) {
       case DoseStatus.taken:
-        return const Icon(Icons.check_circle, color: Colors.green, size: 32);
+        return const Icon(Icons.check_circle, color: Colors.green, size: 28); // Reduced icon size
       case DoseStatus.notTaken:
-        return const Icon(Icons.cancel, color: Colors.red, size: 32);
+        return const Icon(Icons.cancel, color: Colors.red, size: 28); // Reduced icon size
       default:
         return const SizedBox.shrink();
     }
@@ -39,12 +39,12 @@ class PastDoseListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12), // Reduced padding
         child: Row(
           children: [
             SizedBox(
-              width: 80,
-              height: 80,
+              width: 64, // Reduced size
+              height: 64, // Reduced size
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: dose.medicationImagePath.isNotEmpty
@@ -52,10 +52,10 @@ class PastDoseListItem extends StatelessWidget {
                         File(dose.medicationImagePath),
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const MedicationImagePlaceholder(size: 80, iconSize: 40);
+                          return const MedicationImagePlaceholder(size: 64, iconSize: 32); // Reduced icon size
                         },
                       )
-                    : const MedicationImagePlaceholder(size: 80, iconSize: 40),
+                    : const MedicationImagePlaceholder(size: 64, iconSize: 32), // Reduced icon size
               ),
             ),
             const SizedBox(width: 16),
@@ -66,7 +66,7 @@ class PastDoseListItem extends StatelessWidget {
                   Text(
                     dose.medicationName,
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 16, // Reduced font size
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -74,7 +74,7 @@ class PastDoseListItem extends StatelessWidget {
                   Text(
                     DateFormat('dd/MM/yyyy HH:mm').format(dose.time),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12, // Reduced font size
                       color: Colors.grey.shade600,
                     ),
                   ),
@@ -88,10 +88,12 @@ class PastDoseListItem extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.undo), // Or Icons.refresh
                     onPressed: onUnmark,
+                    iconSize: 28, // Reduced icon size
                   ),
                 IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: onDelete,
+                  iconSize: 28, // Reduced icon size
                 ),
               ],
             ),
