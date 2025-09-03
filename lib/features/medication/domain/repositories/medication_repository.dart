@@ -1,5 +1,6 @@
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:pautamedica/features/medication/domain/entities/medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/past_doses_result.dart';
 
 abstract class MedicationRepository {
   Future<List<Medication>> getAllMedications();
@@ -8,7 +9,7 @@ abstract class MedicationRepository {
   Future<Medication> updateMedication(Medication medication);
 
   Future<List<Dose>> getUpcomingDoses();
-  Future<List<Dose>> getPastDoses();
+  Future<PastDosesResult> getPastDoses(); // Changed return type
   Future<void> updateDose(Dose dose);
   Future<void> deleteDose(String id);
   Future<void> generateDoses();

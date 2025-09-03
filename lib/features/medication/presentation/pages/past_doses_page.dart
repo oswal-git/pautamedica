@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/past_dose_list_item.dart';
 
@@ -42,11 +43,23 @@ class _PastDosesPageState extends State<PastDosesPage> {
               itemCount: state.doses.length,
               itemBuilder: (context, index) {
                 final dose = state.doses[index];
+                final isMostRecent = state.mostRecentDoseIds[dose.medicationId] == dose.id;
                 return PastDoseListItem(
                   dose: dose,
+                  isMostRecent: isMostRecent,
                   onDelete: () {
                     context.read<MedicationBloc>().add(DeleteDoseEvent(dose.id));
                   },
+                  onUnmark: isMostRecent
+                      ? () {
+                          context.read<MedicationBloc>().add(
+                                UpdateDoseStatusEvent(
+                                  dose,
+                                  DoseStatus.upcoming, // Or DoseStatus.expired based on time
+                                ),
+                              );
+                        }
+                      : null,
                 );
               },
             );

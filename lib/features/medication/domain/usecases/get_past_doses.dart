@@ -1,12 +1,12 @@
-import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:pautamedica/features/medication/domain/repositories/medication_repository.dart';
+import 'package:pautamedica/features/medication/domain/usecases/past_doses_result.dart';
 
 class GetPastDoses {
   final MedicationRepository repository;
 
   GetPastDoses(this.repository);
 
-  Future<List<Dose>> call() {
+  Future<PastDosesResult> call() {
     return repository.getPastDoses();
   }
 }

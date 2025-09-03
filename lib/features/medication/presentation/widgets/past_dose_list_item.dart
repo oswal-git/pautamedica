@@ -8,11 +8,15 @@ import 'package:pautamedica/features/medication/presentation/widgets/medication_
 class PastDoseListItem extends StatelessWidget {
   final Dose dose;
   final VoidCallback onDelete;
+  final VoidCallback? onUnmark; // New callback
+  final bool isMostRecent; // New property
 
   const PastDoseListItem({
     super.key,
     required this.dose,
     required this.onDelete,
+    this.onUnmark,
+    this.isMostRecent = false,
   });
 
   Widget _getStatusIcon(DoseStatus status) {
@@ -80,6 +84,11 @@ class PastDoseListItem extends StatelessWidget {
             Row(
               children: [
                 _getStatusIcon(dose.status),
+                if (isMostRecent && onUnmark != null) // Conditionally show unmark button
+                  IconButton(
+                    icon: const Icon(Icons.undo), // Or Icons.refresh
+                    onPressed: onUnmark,
+                  ),
                 IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: onDelete,

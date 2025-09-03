@@ -106,11 +106,12 @@ class UpcomingDosesLoaded extends MedicationState {
 
 class PastDosesLoaded extends MedicationState {
   final List<Dose> doses;
+  final Map<String, String> mostRecentDoseIds;
 
-  const PastDosesLoaded(this.doses);
+  const PastDosesLoaded(this.doses, this.mostRecentDoseIds);
 
   @override
-  List<Object?> get props => [doses];
+  List<Object?> get props => [doses, mostRecentDoseIds];
 }
 
 class MedicationError extends MedicationState {
@@ -223,8 +224,8 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   ) async {
     emit(MedicationLoading());
     try {
-      final doses = await getPastDoses();
-      emit(PastDosesLoaded(doses));
+      final result = await getPastDoses();
+      emit(PastDosesLoaded(result.doses, result.mostRecentDoseIds));
     } catch (e) {
       emit(MedicationError(e.toString()));
     }

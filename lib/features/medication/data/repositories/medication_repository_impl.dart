@@ -9,6 +9,7 @@ import 'package:pautamedica/features/medication/domain/entities/repetition_type.
 import 'package:sqflite/sqflite.dart';
 import 'package:pautamedica/features/medication/domain/entities/medication.dart';
 import 'package:pautamedica/features/medication/domain/repositories/medication_repository.dart';
+import 'package:pautamedica/features/medication/domain/usecases/past_doses_result.dart';
 
 class MedicationRepositoryImpl implements MedicationRepository {
   static Database? _database;
@@ -252,7 +253,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   }
 
   @override
-  Future<List<Dose>> getPastDoses() async {
+  Future<PastDosesResult> getPastDoses() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT
@@ -267,7 +268,20 @@ class MedicationRepositoryImpl implements MedicationRepository {
       WHERE d.status = ? OR d.status = ?
       ORDER BY d.time DESC
     ''', ['taken', 'notTaken']);
-    return maps.map((map) => _mapToDose(map)).toList();
+
+    final List<Dose> pastDoses = maps.map((map) => _mapToDose(map)).toList();
+
+    final Map<String, String> mostRecentDoseIds = {};
+    final Set<String> processedMedicationIds = {};
+
+    for (final dose in pastDoses) {
+      if (!processedMedicationIds.contains(dose.medicationId)) {
+        mostRecentDoseIds[dose.medicationId] = dose.id;
+        processedMedicationIds.add(dose.medicationId);
+      }
+    }
+
+    return PastDosesResult(doses: pastDoses, mostRecentDoseIds: mostRecentDoseIds);
   }
 
   @override
