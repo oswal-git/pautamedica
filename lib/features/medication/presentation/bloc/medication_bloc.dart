@@ -8,7 +8,7 @@ import 'package:pautamedica/features/medication/domain/usecases/delete_medicatio
 import 'package:pautamedica/features/medication/domain/usecases/generate_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.dart';
-import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.R';
+import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
 
