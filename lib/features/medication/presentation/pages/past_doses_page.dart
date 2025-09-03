@@ -24,8 +24,14 @@ class _PastDosesPageState extends State<PastDosesPage> {
         title: const Text('Tomas Pasadas'),
       ),
       body: BlocBuilder<MedicationBloc, MedicationState>(
+        buildWhen: (previous, current) {
+          return current is PastDosesLoaded ||
+              current is MedicationLoading ||
+              current is MedicationError ||
+              current is MedicationInitial;
+        },
         builder: (context, state) {
-          if (state is MedicationLoading) {
+          if (state is MedicationLoading || state is MedicationInitial) {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is PastDosesLoaded) {
@@ -46,7 +52,7 @@ class _PastDosesPageState extends State<PastDosesPage> {
             );
           }
           if (state is MedicationError) {
-            return Center(child: Text(state.message));
+            return Center(child: Text('Error: ${state.message}'));
           }
           return const Center(child: Text('Algo salió mal.'));
         },

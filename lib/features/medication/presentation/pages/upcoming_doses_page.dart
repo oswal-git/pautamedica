@@ -55,11 +55,14 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
         ],
       ),
       body: BlocBuilder<MedicationBloc, MedicationState>(
+        buildWhen: (previous, current) {
+          return current is UpcomingDosesLoaded ||
+              current is MedicationLoading ||
+              current is MedicationError ||
+              current is MedicationInitial;
+        },
         builder: (context, state) {
-          if (state is MedicationLoading ||
-              state is MedicationInitial ||
-              state is PastDosesLoaded ||
-              state is MedicationLoaded) {
+          if (state is MedicationLoading || state is MedicationInitial) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -84,7 +87,7 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
           }
 
           if (state is MedicationError) {
-            return Center(child: Text(state.message));
+            return Center(child: Text('Error: ${state.message}'));
           }
 
           return const Center(child: Text('Algo salió mal.'));

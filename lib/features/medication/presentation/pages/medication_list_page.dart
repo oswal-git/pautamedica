@@ -36,6 +36,12 @@ class _MedicationListPageState extends State<MedicationListPage> {
         elevation: 8,
       ),
       body: BlocBuilder<MedicationBloc, MedicationState>(
+        buildWhen: (previous, current) {
+          return current is MedicationLoaded ||
+              current is MedicationLoading ||
+              current is MedicationError ||
+              current is MedicationInitial;
+        },
         builder: (context, state) {
           print('MedicationListPage: Estado actual: ${state.runtimeType}');
 
