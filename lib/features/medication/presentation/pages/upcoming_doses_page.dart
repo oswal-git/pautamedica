@@ -79,7 +79,7 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                   onStatusChanged: (status) {
                     context
                         .read<MedicationBloc>()
-                        .add(UpdateDoseStatusEvent(dose, status));
+                        .add(UpdateDoseStatusEvent(dose, status, refreshPastDoses: false)); // Explicitly set to false
                   },
                 );
               },

@@ -56,6 +56,7 @@ class _PastDosesPageState extends State<PastDosesPage> {
                                 UpdateDoseStatusEvent(
                                   dose,
                                   DoseStatus.upcoming, // Or DoseStatus.expired based on time
+                                  refreshPastDoses: true, // Set to true
                                 ),
                               );
                         }

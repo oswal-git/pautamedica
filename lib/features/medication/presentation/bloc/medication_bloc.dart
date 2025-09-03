@@ -8,7 +8,7 @@ import 'package:pautamedica/features/medication/domain/usecases/delete_medicatio
 import 'package:pautamedica/features/medication/domain/usecases/generate_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.dart';
-import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.R';
 import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
 
@@ -56,11 +56,12 @@ class LoadPastDoses extends MedicationEvent {}
 class UpdateDoseStatusEvent extends MedicationEvent {
   final Dose dose;
   final DoseStatus status;
+  final bool refreshPastDoses; // New parameter
 
-  const UpdateDoseStatusEvent(this.dose, this.status);
+  const UpdateDoseStatusEvent(this.dose, this.status, {this.refreshPastDoses = false}); // Updated constructor
 
   @override
-  List<Object?> get props => [dose, status];
+  List<Object?> get props => [dose, status, refreshPastDoses]; // Updated props
 }
 
 class DeleteDoseEvent extends MedicationEvent {
@@ -238,8 +239,11 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     try {
       final updatedDose = event.dose.copyWith(status: event.status);
       await updateDoseStatus(updatedDose);
-      // await medicationRepository.updateDose(updatedDose);
-      add(LoadUpcomingDoses()); // Refresh the list
+      if (event.refreshPastDoses) {
+        add(LoadPastDoses()); // Refresh past doses list
+      } else {
+        add(LoadUpcomingDoses()); // Refresh upcoming doses list
+      }
     } catch (e) {
       emit(MedicationError(e.toString()));
     }
