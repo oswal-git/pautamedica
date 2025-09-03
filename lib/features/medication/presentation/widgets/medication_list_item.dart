@@ -35,15 +35,15 @@ class MedicationListItem extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12), // Reduced padding
           child: Row(
             children: [
               // Imagen del medicamento (tocable)
               GestureDetector(
                 onTap: onImageTap,
                 child: Container(
-                  width: 80,
-                  height: 80,
+                  width: 64, // Reduced size
+                  height: 64, // Reduced size
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.grey.shade300),
@@ -55,10 +55,10 @@ class MedicationListItem extends StatelessWidget {
                             File(medication.imagePath),
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              return const MedicationImagePlaceholder(size: 80, iconSize: 40);
+                              return const MedicationImagePlaceholder(size: 64, iconSize: 32); // Reduced icon size
                             },
                           )
-                        : const MedicationImagePlaceholder(size: 80, iconSize: 40),
+                        : const MedicationImagePlaceholder(size: 64, iconSize: 32), // Reduced icon size
                   ),
                 ),
               ),
@@ -73,7 +73,7 @@ class MedicationListItem extends StatelessWidget {
                     Text(
                       medication.name,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16, // Reduced font size
                         fontWeight: FontWeight.w700,
                         color: Colors.black87,
                       ),
@@ -86,7 +86,7 @@ class MedicationListItem extends StatelessWidget {
                     Text(
                       medication.posology,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12, // Reduced font size
                         color: Colors.grey.shade600,
                       ),
                       maxLines: 2,
@@ -103,7 +103,7 @@ class MedicationListItem extends StatelessWidget {
                       Text(
                         'Horarios: ${_formatSchedules(medication.schedules)}',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10, // Reduced font size
                           color: Colors.grey.shade500,
                         ),
                         maxLines: 1,
@@ -123,13 +123,13 @@ class MedicationListItem extends StatelessWidget {
                     icon: Icon(
                       Icons.edit,
                       color: Colors.deepPurple.shade600,
-                      size: 20,
+                      size: 16, // Reduced icon size
                     ),
                     tooltip: 'Editar',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
+                      minWidth: 28, // Reduced minWidth
+                      minHeight: 28, // Reduced minHeight
                     ),
                   ),
 
@@ -139,13 +139,13 @@ class MedicationListItem extends StatelessWidget {
                     icon: Icon(
                       Icons.delete_outline,
                       color: Colors.red.shade600,
-                      size: 20,
+                      size: 16, // Reduced icon size
                     ),
                     tooltip: 'Eliminar',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
+                      minWidth: 28, // Reduced minWidth
+                      minHeight: 28, // Reduced minHeight
                     ),
                   ),
                 ],
@@ -167,14 +167,14 @@ class MedicationListItem extends StatelessWidget {
       children: [
         Icon(
           Icons.repeat,
-          size: 16,
+          size: 14, // Reduced icon size
           color: Colors.grey.shade600,
         ),
         const SizedBox(width: 4),
         Text(
           repetitionText,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 10, // Reduced font size
             color: Colors.grey.shade600,
             fontWeight: FontWeight.w500,
           ),
