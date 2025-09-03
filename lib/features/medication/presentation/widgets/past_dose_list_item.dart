@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
+import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/medication_image_placeholder.dart';
 
 class PastDoseListItem extends StatelessWidget {
@@ -12,6 +14,17 @@ class PastDoseListItem extends StatelessWidget {
     required this.dose,
     required this.onDelete,
   });
+
+  Widget _getStatusIcon(DoseStatus status) {
+    switch (status) {
+      case DoseStatus.taken:
+        return const Icon(Icons.check_circle, color: Colors.green, size: 32);
+      case DoseStatus.notTaken:
+        return const Icon(Icons.cancel, color: Colors.red, size: 32);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +68,7 @@ class PastDoseListItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${dose.time.hour.toString().padLeft(2, '0')}:${dose.time.minute.toString().padLeft(2, '0')}',
+                    DateFormat('dd/MM/yyyy HH:mm').format(dose.time),
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade600,
@@ -64,9 +77,14 @@ class PastDoseListItem extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: onDelete,
+            Row(
+              children: [
+                _getStatusIcon(dose.status),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: onDelete,
+                ),
+              ],
             ),
           ],
         ),

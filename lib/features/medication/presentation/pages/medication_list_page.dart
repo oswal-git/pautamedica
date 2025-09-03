@@ -6,8 +6,19 @@ import 'package:pautamedica/features/medication/presentation/widgets/medication_
 import 'package:pautamedica/features/medication/presentation/widgets/add_medication_fab.dart';
 import 'package:pautamedica/features/medication/presentation/pages/add_edit_medication_page.dart';
 
-class MedicationListPage extends StatelessWidget {
+class MedicationListPage extends StatefulWidget {
   const MedicationListPage({super.key});
+
+  @override
+  State<MedicationListPage> createState() => _MedicationListPageState();
+}
+
+class _MedicationListPageState extends State<MedicationListPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<MedicationBloc>().add(LoadMedications());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +39,7 @@ class MedicationListPage extends StatelessWidget {
         builder: (context, state) {
           print('MedicationListPage: Estado actual: ${state.runtimeType}');
 
-          if (state is MedicationLoading) {
+          if (state is MedicationLoading || state is UpcomingDosesLoaded) {
             print('MedicationListPage: Mostrando loading...');
             return const Center(
               child: Column(
@@ -120,6 +131,7 @@ class MedicationListPage extends StatelessWidget {
               itemBuilder: (context, index) {
                 final medication = state.medications[index];
                 return MedicationListItem(
+                  key: ValueKey(medication.id),
                   medication: medication,
                   onTap: () => _showMedicationDetails(context, medication),
                   onImageTap: () => _showImageFullScreen(context, medication),
@@ -217,7 +229,7 @@ class MedicationListPage extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pop();
                 context.read<MedicationBloc>().add(
-                      DeleteMedication(medication.id),
+                      DeleteMedicationEvent(medication.id),
                     );
               },
               style: TextButton.styleFrom(

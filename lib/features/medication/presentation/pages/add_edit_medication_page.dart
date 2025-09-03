@@ -290,7 +290,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<RepetitionType>(
-          value: _repetitionType,
+          initialValue: _repetitionType,
           onChanged: (value) {
             setState(() {
               _repetitionType = value!;
@@ -546,7 +546,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         endDate: _isIndefinite ? null : _endDate,
       );
 
-      context.read<MedicationBloc>().add(UpdateMedication(updatedMedication));
+      context.read<MedicationBloc>().add(UpdateMedicationEvent(updatedMedication));
     } else {
       final newMedication = Medication(
         id: DateTime.now().toIso8601String(),
@@ -560,7 +560,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         indefinite: _isIndefinite,
         endDate: _isIndefinite ? null : _endDate,
       );
-      context.read<MedicationBloc>().add(AddMedication(newMedication));
+            context.read<MedicationBloc>().add(AddMedicationEvent(newMedication));
     }
 
     Navigator.pop(context);

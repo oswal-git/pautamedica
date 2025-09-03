@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/data/repositories/medication_repository_impl.dart';
+import 'package:pautamedica/features/medication/domain/usecases/add_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/delete_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/generate_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
+import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/pages/upcoming_doses_page.dart';
+
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -10,9 +19,19 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => MedicationBloc(
-        MedicationRepositoryImpl(),
-      )..add(GenerateDoses()),
+            create: (context) {
+        final medicationRepository = MedicationRepositoryImpl();
+        return MedicationBloc(
+          getMedications: GetMedications(medicationRepository),
+          addMedication: AddMedication(medicationRepository),
+          updateMedication: UpdateMedication(medicationRepository),
+          deleteMedication: DeleteMedication(medicationRepository),
+          getUpcomingDoses: GetUpcomingDoses(medicationRepository),
+          getPastDoses: GetPastDoses(medicationRepository),
+          updateDoseStatus: UpdateDoseStatus(medicationRepository),
+          generateDoses: GenerateDoses(medicationRepository),
+        )..add(GenerateDosesEvent());
+      },
       child: MaterialApp(
         // showPerformanceOverlay: true,
         title: 'Pauta Médica',

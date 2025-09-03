@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pautamedica/features/medication/data/notification_service.dart';
@@ -125,7 +126,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
     final doses = await db.query(_dosesTableName, where: 'medicationId = ?', whereArgs: [id]);
     for (final dose in doses) {
-      await _notificationService.cancelNotification(dose['id'].hashCode);
+      await _notificationService.cancelDoseNotifications(dose['id'] as String);
     }
 
     await db.delete(
@@ -193,6 +194,16 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   Future<List<Dose>> getUpcomingDoses() async {
     final db = await database;
+
+    // Update statuses of upcoming doses to expired if they are in the past
+    final now = DateTime.now();
+    await db.update(
+      _dosesTableName,
+      {'status': 'expired'},
+      where: 'status = ? AND time < ?',
+      whereArgs: ['upcoming', now.toIso8601String()],
+    );
+
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT
         d.id,
@@ -206,7 +217,38 @@ class MedicationRepositoryImpl implements MedicationRepository {
       WHERE d.status = ? OR d.status = ?
       ORDER BY d.time ASC
     ''', ['upcoming', 'expired']);
-    return maps.map((map) => _mapToDose(map)).toList();
+
+    final allDoses = maps.map((map) => _mapToDose(map)).toList();
+    final Map<String, List<Dose>> dosesByMedication = {};
+
+    for (final dose in allDoses) {
+      if (!dosesByMedication.containsKey(dose.medicationId)) {
+        dosesByMedication[dose.medicationId] = [];
+      }
+      dosesByMedication[dose.medicationId]!.add(dose);
+    }
+
+    final List<Dose> upcomingDoses = [];
+    dosesByMedication.forEach((medicationId, doses) {
+      if (doses.isNotEmpty) {
+        final firstDose = doses.first;
+        if (firstDose.status == DoseStatus.upcoming) {
+          upcomingDoses.add(firstDose);
+        } else if (firstDose.status == DoseStatus.expired) {
+          upcomingDoses.add(firstDose);
+          final nextUpcoming = doses.firstWhereOrNull(
+            (d) => d.status == DoseStatus.upcoming,
+          );
+          if (nextUpcoming != null) {
+            upcomingDoses.add(nextUpcoming);
+          }
+        }
+      }
+    });
+
+    upcomingDoses.sort((a, b) => a.time.compareTo(b.time));
+
+    return upcomingDoses;
   }
 
   @override
@@ -237,7 +279,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       where: 'id = ?',
       whereArgs: [dose.id],
     );
-    await _notificationService.cancelNotification(dose.id.hashCode);
+    await _notificationService.cancelDoseNotifications(dose.id);
   }
 
   @override
@@ -248,7 +290,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
-    await _notificationService.cancelNotification(id.hashCode);
+    await _notificationService.cancelDoseNotifications(id);
   }
 
   @override
@@ -256,6 +298,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final medications = await getAllMedications();
     final db = await database;
     final batch = db.batch();
+    final List<Dose> newDoses = [];
 
     final now = DateTime.now();
     final threeMonthsFromNow = now.add(const Duration(days: 90));
@@ -270,7 +313,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
             schedule.hour,
             schedule.minute,
           );
-          if (doseTime.isAfter(now.subtract(const Duration(days: 1)))) { // to include today's past doses
+          if (doseTime.isAfter(now.subtract(const Duration(days: 1)))) {
             final existingDoses = await db.query(
               _dosesTableName,
               where: 'medicationId = ? AND time = ?',
@@ -286,19 +329,15 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 status: DoseStatus.upcoming,
               );
               batch.insert(_dosesTableName, _doseToMap(dose));
-              _notificationService.scheduleNotification(
-                id: dose.id.hashCode,
-                title: 'Hora de tomar la medicación',
-                body: 'Es hora de tomar ${medication.name}',
-                scheduledTime: doseTime,
-              );
+              newDoses.add(dose);
             }
           }
         }
       } else {
         var currentDate = medication.createdAt;
         while (currentDate.isBefore(threeMonthsFromNow)) {
-          if (medication.endDate != null && currentDate.isAfter(medication.endDate!)) {
+          if (medication.endDate != null &&
+              currentDate.isAfter(medication.endDate!)) {
             break;
           }
 
@@ -311,7 +350,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
               schedule.minute,
             );
 
-            if (doseTime.isAfter(now.subtract(const Duration(days: 1)))) { // to include today's past doses
+            if (doseTime.isAfter(now.subtract(const Duration(days: 1)))) {
               final existingDoses = await db.query(
                 _dosesTableName,
                 where: 'medicationId = ? AND time = ?',
@@ -327,28 +366,32 @@ class MedicationRepositoryImpl implements MedicationRepository {
                   status: DoseStatus.upcoming,
                 );
                 batch.insert(_dosesTableName, _doseToMap(dose));
-                _notificationService.scheduleNotification(
-                  id: dose.id.hashCode,
-                  title: 'Hora de tomar la medicación',
-                  body: 'Es hora de tomar ${medication.name}',
-                  scheduledTime: doseTime,
-                );
+                newDoses.add(dose);
               }
             }
           }
 
           if (medication.repetitionType == RepetitionType.daily) {
-            currentDate = currentDate.add(Duration(days: medication.repetitionInterval ?? 1));
+            currentDate = currentDate
+                .add(Duration(days: medication.repetitionInterval ?? 1));
           } else if (medication.repetitionType == RepetitionType.weekly) {
-            currentDate = currentDate.add(Duration(days: (medication.repetitionInterval ?? 1) * 7));
+            currentDate = currentDate.add(
+                Duration(days: (medication.repetitionInterval ?? 1) * 7));
           } else if (medication.repetitionType == RepetitionType.monthly) {
-            currentDate = DateTime(currentDate.year, currentDate.month + (medication.repetitionInterval ?? 1), currentDate.day);
+            currentDate = DateTime(
+                currentDate.year,
+                currentDate.month + (medication.repetitionInterval ?? 1),
+                currentDate.day);
           }
         }
       }
     }
 
     await batch.commit(noResult: true);
+
+    for (final dose in newDoses) {
+      await _notificationService.scheduleDoseNotifications(dose);
+    }
 
     // Delete doses older than 3 months
     final threeMonthsAgo = now.subtract(const Duration(days: 90));
@@ -376,7 +419,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
       medicationImagePath: map['medicationImagePath'] as String,
       time: DateTime.parse(map['time'] as String),
       status: DoseStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == (map['status'] as String? ?? 'upcoming'),
+        (e) =>
+            e.toString().split('.').last ==
+            (map['status'] as String? ?? 'upcoming'),
         orElse: () => DoseStatus.upcoming,
       ),
     );

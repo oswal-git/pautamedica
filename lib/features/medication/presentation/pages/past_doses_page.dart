@@ -3,14 +3,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/past_dose_list_item.dart';
 
-class PastDosesPage extends StatelessWidget {
+class PastDosesPage extends StatefulWidget {
   const PastDosesPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Load past doses when the page is built
-    context.read<MedicationBloc>().add(LoadPastDoses());
+  State<PastDosesPage> createState() => _PastDosesPageState();
+}
 
+class _PastDosesPageState extends State<PastDosesPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<MedicationBloc>().add(LoadPastDoses());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tomas Pasadas'),
@@ -31,7 +39,7 @@ class PastDosesPage extends StatelessWidget {
                 return PastDoseListItem(
                   dose: dose,
                   onDelete: () {
-                    context.read<MedicationBloc>().add(DeleteDose(dose.id));
+                    context.read<MedicationBloc>().add(DeleteDoseEvent(dose.id));
                   },
                 );
               },

@@ -2,7 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"> <!-- Add this line -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <application
+        <application
+        android:enableOnBackInvokedCallback="true"
         android:label="pautamedica"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

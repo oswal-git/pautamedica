@@ -4,104 +4,53 @@
 
   // Configuración de colores personalizados para máximo contraste
   "workbench.colorCustomizations": {
-    // Fondo del editor
     "editor.background": "#000000",
     "editor.foreground": "#FFFFFF",
-
-    // Línea actual
     "editor.lineHighlightBackground": "#1A1A1A",
     "editor.lineHighlightBorder": "#333333",
-
-    // Selección
     "editor.selectionBackground": "#264F78",
     "editor.selectionHighlightBackground": "#1A1A1A",
-
-    // Búsqueda
     "editor.findMatchBackground": "#515C6A",
     "editor.findMatchHighlightBackground": "#3A3D41",
-
-    // Errores y warnings
-    "editorError.foreground": "#F44747",
-    "editorWarning.foreground": "#FFCC02",
-    "editorInfo.foreground": "#75BEFF",
-
-    // Sidebar
     "sideBar.background": "#1E1E1E",
     "sideBar.foreground": "#FFFFFF",
     "sideBarTitle.foreground": "#FFFFFF",
-
-    // Barra de estado
-    "statusBar.background": "#007ACC",
-    "statusBar.foreground": "#FFFFFF",
-
-    // Barra de actividad
-    "activityBar.background": "#333333",
-    "activityBar.foreground": "#FFFFFF",
     "activityBar.activeBorder": "#FFFFFF",
-
-    // Panel de terminal
     "terminal.background": "#000000",
     "terminal.foreground": "#FFFFFF",
-
-    // Tabs
     "tab.activeBackground": "#1E1E1E",
     "tab.inactiveBackground": "#2D2D2D",
     "tab.activeForeground": "#FFFFFF",
     "tab.inactiveForeground": "#CCCCCC",
-
-    // 🎨 COLORES PERSONALIZADOS PARA EL CHAT DE CURSOR
-    // Panel principal del chat
     "chat.editorBackground": "#000000",
     "chat.editorForeground": "#FFFFFF",
-
-    // Área de entrada del chat
     "chat.inputBackground": "#1A1A1A",
     "chat.inputBorder": "#333333",
     "chat.inputForeground": "#FFFFFF",
     "chat.inputPlaceholderForeground": "#888888",
-
-    // Botón de envío del chat
     "chat.sendButtonBackground": "#007ACC",
     "chat.sendButtonForeground": "#FFFFFF",
     "chat.sendButtonHoverBackground": "#005A9E",
-
-    // Mensajes del usuario (inputs)
     "chat.userMessageBackground": "#1E3A5F",
     "chat.userMessageForeground": "#FFFFFF",
     "chat.userMessageBorder": "#264F78",
-
-    // Mensajes del asistente (outputs)
     "chat.assistantMessageBackground": "#2D2D2D",
     "chat.assistantMessageForeground": "#FFFFFF",
     "chat.assistantMessageBorder": "#444444",
-
-    // Código en los mensajes del chat
     "chat.codeBlockBackground": "#1A1A1A",
     "chat.codeBlockForeground": "#FFFFFF",
     "chat.codeBlockBorder": "#333333",
-
-    // Enlaces en el chat
     "chat.linkForeground": "#75BEFF",
     "chat.linkHoverForeground": "#4A9EFF",
-
-    // Botones de acción del chat
     "chat.actionButtonBackground": "#333333",
     "chat.actionButtonForeground": "#FFFFFF",
     "chat.actionButtonHoverBackground": "#444444",
-
-    // Scrollbar del chat
     "chat.scrollbarBackground": "#333333",
     "chat.scrollbarSliderBackground": "#666666",
     "chat.scrollbarSliderHoverBackground": "#888888",
-
-    // Separadores entre mensajes
     "chat.separatorBackground": "#333333",
-
-    // Indicadores de estado
     "chat.statusBackground": "#1A1A1A",
     "chat.statusForeground": "#888888",
-
-    // Tooltips del chat
     "chat.tooltipBackground": "#1E1E1E",
     "chat.tooltipForeground": "#FFFFFF",
     "chat.tooltipBorder": "#333333"
@@ -187,6 +136,7 @@
   // Configuración de Git
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
+  "git.path": "C:\\Program Files\\Git\\bin\\git.exe",
 
   // Configuración de extensiones
   "extensions.ignoreRecommendations": false,

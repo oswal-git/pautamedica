@@ -3,7 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/domain/entities/medication.dart';
-import 'package:pautamedica/features/medication/domain/repositories/medication_repository.dart';
+import 'package:pautamedica/features/medication/domain/usecases/add_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/delete_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/generate_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
+import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
 
 // Events
 abstract class MedicationEvent extends Equatable {
@@ -15,28 +22,28 @@ abstract class MedicationEvent extends Equatable {
 
 class LoadMedications extends MedicationEvent {}
 
-class AddMedication extends MedicationEvent {
+class AddMedicationEvent extends MedicationEvent {
   final Medication medication;
 
-  const AddMedication(this.medication);
+  const AddMedicationEvent(this.medication);
 
   @override
   List<Object?> get props => [medication];
 }
 
-class UpdateMedication extends MedicationEvent {
+class UpdateMedicationEvent extends MedicationEvent {
   final Medication medication;
 
-  const UpdateMedication(this.medication);
+  const UpdateMedicationEvent(this.medication);
 
   @override
   List<Object?> get props => [medication];
 }
 
-class DeleteMedication extends MedicationEvent {
+class DeleteMedicationEvent extends MedicationEvent {
   final String id;
 
-  const DeleteMedication(this.id);
+  const DeleteMedicationEvent(this.id);
 
   @override
   List<Object?> get props => [id];
@@ -46,26 +53,26 @@ class LoadUpcomingDoses extends MedicationEvent {}
 
 class LoadPastDoses extends MedicationEvent {}
 
-class UpdateDoseStatus extends MedicationEvent {
+class UpdateDoseStatusEvent extends MedicationEvent {
   final Dose dose;
   final DoseStatus status;
 
-  const UpdateDoseStatus(this.dose, this.status);
+  const UpdateDoseStatusEvent(this.dose, this.status);
 
   @override
   List<Object?> get props => [dose, status];
 }
 
-class DeleteDose extends MedicationEvent {
+class DeleteDoseEvent extends MedicationEvent {
   final String id;
 
-  const DeleteDose(this.id);
+  const DeleteDoseEvent(this.id);
 
   @override
   List<Object?> get props => [id];
 }
 
-class GenerateDoses extends MedicationEvent {}
+class GenerateDosesEvent extends MedicationEvent {}
 
 // States
 abstract class MedicationState extends Equatable {
@@ -117,18 +124,33 @@ class MedicationError extends MedicationState {
 
 // BLoC
 class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
-  final MedicationRepository _medicationRepository;
+  final GetMedications getMedications;
+  final AddMedication addMedication;
+  final UpdateMedication updateMedication;
+  final DeleteMedication deleteMedication;
+  final GetUpcomingDoses getUpcomingDoses;
+  final GetPastDoses getPastDoses;
+  final UpdateDoseStatus updateDoseStatus;
+  final GenerateDoses generateDoses;
 
-  MedicationBloc(this._medicationRepository) : super(MedicationInitial()) {
+  MedicationBloc({
+    required this.getMedications,
+    required this.addMedication,
+    required this.updateMedication,
+    required this.deleteMedication,
+    required this.getUpcomingDoses,
+    required this.getPastDoses,
+    required this.updateDoseStatus,
+    required this.generateDoses,
+  }) : super(MedicationInitial()) {
     on<LoadMedications>(_onLoadMedications);
-    on<AddMedication>(_onAddMedication);
-    on<UpdateMedication>(_onUpdateMedication);
-    on<DeleteMedication>(_onDeleteMedication);
+    on<AddMedicationEvent>(_onAddMedication);
+    on<UpdateMedicationEvent>(_onUpdateMedication);
+    on<DeleteMedicationEvent>(_onDeleteMedication);
     on<LoadUpcomingDoses>(_onLoadUpcomingDoses);
     on<LoadPastDoses>(_onLoadPastDoses);
-    on<UpdateDoseStatus>(_onUpdateDoseStatus);
-    on<DeleteDose>(_onDeleteDose);
-    on<GenerateDoses>(_onGenerateDoses);
+    on<UpdateDoseStatusEvent>(_onUpdateDoseStatus);
+    on<GenerateDosesEvent>(_onGenerateDoses);
   }
 
   Future<void> _onLoadMedications(
@@ -137,7 +159,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   ) async {
     emit(MedicationLoading());
     try {
-      final medications = await _medicationRepository.getAllMedications();
+      final medications = await getMedications();
       emit(MedicationLoaded(medications));
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -145,12 +167,12 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   }
 
   Future<void> _onAddMedication(
-    AddMedication event,
+    AddMedicationEvent event,
     Emitter<MedicationState> emit,
   ) async {
     try {
-      await _medicationRepository.saveMedication(event.medication);
-      add(GenerateDoses());
+      await addMedication(event.medication);
+      add(GenerateDosesEvent());
       add(LoadMedications());
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -158,12 +180,12 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   }
 
   Future<void> _onUpdateMedication(
-    UpdateMedication event,
+    UpdateMedicationEvent event,
     Emitter<MedicationState> emit,
   ) async {
     try {
-      await _medicationRepository.updateMedication(event.medication);
-      add(GenerateDoses());
+      await updateMedication(event.medication);
+      add(GenerateDosesEvent());
       add(LoadMedications());
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -171,11 +193,11 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   }
 
   Future<void> _onDeleteMedication(
-    DeleteMedication event,
+    DeleteMedicationEvent event,
     Emitter<MedicationState> emit,
   ) async {
     try {
-      await _medicationRepository.deleteMedication(event.id);
+      await deleteMedication(event.id);
       add(LoadMedications());
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -188,7 +210,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   ) async {
     emit(MedicationLoading());
     try {
-      final doses = await _medicationRepository.getUpcomingDoses();
+      final doses = await getUpcomingDoses();
       emit(UpcomingDosesLoaded(doses));
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -201,7 +223,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   ) async {
     emit(MedicationLoading());
     try {
-      final doses = await _medicationRepository.getPastDoses();
+      final doses = await getPastDoses();
       emit(PastDosesLoaded(doses));
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -209,36 +231,25 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   }
 
   Future<void> _onUpdateDoseStatus(
-    UpdateDoseStatus event,
+    UpdateDoseStatusEvent event,
     Emitter<MedicationState> emit,
   ) async {
     try {
       final updatedDose = event.dose.copyWith(status: event.status);
-      await _medicationRepository.updateDose(updatedDose);
+      await updateDoseStatus(updatedDose);
+      // await medicationRepository.updateDose(updatedDose);
       add(LoadUpcomingDoses()); // Refresh the list
     } catch (e) {
       emit(MedicationError(e.toString()));
     }
   }
 
-  Future<void> _onDeleteDose(
-    DeleteDose event,
-    Emitter<MedicationState> emit,
-  ) async {
-    try {
-      await _medicationRepository.deleteDose(event.id);
-      add(LoadPastDoses()); // Refresh the list
-    } catch (e) {
-      emit(MedicationError(e.toString()));
-    }
-  }
-
   Future<void> _onGenerateDoses(
-    GenerateDoses event,
+    GenerateDosesEvent event,
     Emitter<MedicationState> emit,
   ) async {
     try {
-      await _medicationRepository.generateDoses();
+      await generateDoses();
     } catch (e) {
       emit(MedicationError(e.toString()));
     }

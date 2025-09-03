@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/medication_image_placeholder.dart';
@@ -14,11 +15,28 @@ class DoseListItem extends StatelessWidget {
     required this.onStatusChanged,
   });
 
+  Color _getCardColor(Dose dose) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final doseDate = DateTime(dose.time.year, dose.time.month, dose.time.day);
+
+    if (dose.status == DoseStatus.expired) {
+      return Colors.red.shade200; // Stronger red for expired
+    }
+
+    if (doseDate == today) {
+      return Colors.orange.shade100; // Reddish for today
+    }
+
+    return Colors.white; // Default color for other days
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 4,
+      color: _getCardColor(dose),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -56,7 +74,7 @@ class DoseListItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${dose.time.hour.toString().padLeft(2, '0')}:${dose.time.minute.toString().padLeft(2, '0')}',
+                    DateFormat('dd/MM/yyyy HH:mm').format(dose.time),
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade600,
@@ -65,31 +83,14 @@ class DoseListItem extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              children: [
-                const Text('Tomada'),
-                Checkbox(
-                  value: dose.status == DoseStatus.taken,
-                  onChanged: (value) {
-                    if (value == true) {
-                      onStatusChanged(DoseStatus.taken);
-                    }
-                  },
-                ),
-              ],
+            IconButton(
+              icon: const Icon(Icons.check_circle, color: Colors.green, size: 32),
+              onPressed: () => onStatusChanged(DoseStatus.taken),
             ),
-            Column(
-              children: [
-                const Text('No Tomada'),
-                Checkbox(
-                  value: dose.status == DoseStatus.notTaken,
-                  onChanged: (value) {
-                    if (value == true) {
-                      onStatusChanged(DoseStatus.notTaken);
-                    }
-                  },
-                ),
-              ],
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.cancel, color: Colors.red, size: 32),
+              onPressed: () => onStatusChanged(DoseStatus.notTaken),
             ),
           ],
         ),
