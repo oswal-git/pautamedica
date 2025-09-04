@@ -10,6 +10,7 @@ class PastDoseListItem extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onUnmark; // New callback
   final bool isMostRecent; // New property
+  final VoidCallback? onImageTap; // New callback
 
   const PastDoseListItem({
     super.key,
@@ -17,6 +18,7 @@ class PastDoseListItem extends StatelessWidget {
     required this.onDelete,
     this.onUnmark,
     this.isMostRecent = false,
+    this.onImageTap,
   });
 
   Widget _getStatusIcon(DoseStatus status) {
@@ -42,20 +44,23 @@ class PastDoseListItem extends StatelessWidget {
         padding: const EdgeInsets.all(12), // Reduced padding
         child: Row(
           children: [
-            SizedBox(
-              width: 64, // Reduced size
-              height: 64, // Reduced size
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: dose.medicationImagePath.isNotEmpty
-                    ? Image.file(
-                        File(dose.medicationImagePath),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const MedicationImagePlaceholder(size: 64, iconSize: 32); // Reduced icon size
-                        },
-                      )
-                    : const MedicationImagePlaceholder(size: 64, iconSize: 32), // Reduced icon size
+            GestureDetector( // Added GestureDetector
+              onTap: onImageTap, // Assign onImageTap
+              child: SizedBox(
+                width: 64, // Reduced size
+                height: 64, // Reduced size
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: dose.medicationImagePath.isNotEmpty
+                      ? Image.file(
+                          File(dose.medicationImagePath),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const MedicationImagePlaceholder(size: 64, iconSize: 32); // Reduced icon size
+                          },
+                        )
+                      : const MedicationImagePlaceholder(size: 64, iconSize: 32), // Reduced icon size
+                ),
               ),
             ),
             const SizedBox(width: 16),

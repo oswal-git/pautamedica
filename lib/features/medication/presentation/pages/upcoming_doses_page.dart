@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
@@ -81,6 +82,7 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                         .read<MedicationBloc>()
                         .add(UpdateDoseStatusEvent(dose, status, refreshPastDoses: false)); // Explicitly set to false
                   },
+                  onImageTap: () => _showImageFullScreen(context, dose.medicationName, dose.medicationImagePath),
                 );
               },
             );
@@ -92,6 +94,41 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
 
           return const Center(child: Text('Algo salió mal.'));
         },
+      ),
+    );
+  }
+
+  void _showImageFullScreen(BuildContext context, String medicationName, String imagePath) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: Text(
+              medicationName,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            backgroundColor: Colors.deepPurple.shade900,
+            foregroundColor: Colors.white,
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              child: (imagePath.isNotEmpty && File(imagePath).existsSync())
+                  ? Image.file(
+                      File(imagePath),
+                      fit: BoxFit.contain,
+                    )
+                  : const Icon(
+                      Icons.image_not_supported,
+                      size: 100,
+                      color: Colors.grey,
+                    ),
+            ),
+          ),
+        ),
       ),
     );
   }
