@@ -206,10 +206,16 @@ class _MedicationListPageState extends State<MedicationListPage> {
           ),
           body: Center(
             child: InteractiveViewer(
-              child: Image.file(
-                File(medication.imagePath),
-                fit: BoxFit.contain,
-              ),
+              child: (medication.imagePath != null && medication.imagePath.isNotEmpty && File(medication.imagePath).existsSync())
+                  ? Image.file(
+                      File(medication.imagePath),
+                      fit: BoxFit.contain, // Keep contain for aspect ratio
+                    )
+                  : const Icon(
+                      Icons.image_not_supported, // Placeholder icon
+                      size: 100,
+                      color: Colors.grey,
+                    ),
             ),
           ),
         ),
