@@ -14,7 +14,7 @@ buildscript {
         // Ejemplo: para Kotlin 1.9.20+, AGP 8.1+ es común.
         // Para Kotlin 2.0+, podrías necesitar AGP 8.2+ o superior.
         // Puedes encontrar la versión actual en tu proyecto o revisar las recomendaciones.
-        classpath 'com.android.tools.build:gradle:8.6.0' // AJUSTA ESTA VERSIÓN SEGÚN SEA NECESARIO
+        classpath 'com.android.tools.build:gradle:8.2.0' // AJUSTA ESTA VERSIÓN SEGÚN SEA NECESARIO
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }

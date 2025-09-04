@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pautamedica/features/medication/data/notification_service.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/domain/entities/repetition_type.dart';
@@ -15,7 +14,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
   static Database? _database;
   static const String _medicationsTableName = 'medications';
   static const String _dosesTableName = 'doses';
-  final NotificationService _notificationService = NotificationService();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -25,12 +23,11 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
   Future<Database> _initDatabase() async {
     try {
-      await _notificationService.init();
       final documentsDirectory = await getApplicationDocumentsDirectory();
       final path = join(documentsDirectory.path, 'medications.db');
       return await openDatabase(
         path,
-        version: 4, // Incremented version
+        version: 5,
         onCreate: (db, version) async {
           await _createMedicationsTable(db);
           await _createDosesTable(db);
@@ -41,6 +38,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 'ALTER TABLE $_medicationsTableName ADD COLUMN firstDoseDate TEXT');
             await db.rawUpdate(
                 'UPDATE $_medicationsTableName SET firstDoseDate = createdAt WHERE firstDoseDate IS NULL');
+          }
+          if (oldVersion < 5) {
+            await db.execute(
+                'ALTER TABLE $_dosesTableName ADD COLUMN notificationSentCount INTEGER NOT NULL DEFAULT 0');
           }
         },
       );
@@ -74,7 +75,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
         id TEXT PRIMARY KEY,
         medicationId TEXT NOT NULL,
         time TEXT NOT NULL,
-        status TEXT NOT NULL
+        status TEXT NOT NULL,
+        notificationSentCount INTEGER NOT NULL DEFAULT 0
       )
     ''');
   }
@@ -125,11 +127,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
-
-    final doses = await db.query(_dosesTableName, where: 'medicationId = ?', whereArgs: [id]);
-    for (final dose in doses) {
-      await _notificationService.cancelDoseNotifications(dose['id'] as String);
-    }
 
     await db.delete(
       _dosesTableName,
@@ -219,7 +216,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
         m.name as medicationName,
         m.imagePath as medicationImagePath,
         d.time,
-        d.status
+        d.status,
+        d.notificationSentCount
       FROM $_dosesTableName d
       INNER JOIN $_medicationsTableName m ON d.medicationId = m.id
       WHERE d.status = ? OR d.status = ?
@@ -269,7 +267,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
         m.name as medicationName,
         m.imagePath as medicationImagePath,
         d.time,
-        d.status
+        d.status,
+        d.notificationSentCount
       FROM $_dosesTableName d
       INNER JOIN $_medicationsTableName m ON d.medicationId = m.id
       WHERE d.status = ? OR d.status = ?
@@ -300,7 +299,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
       where: 'id = ?',
       whereArgs: [dose.id],
     );
-    await _notificationService.cancelDoseNotifications(dose.id);
   }
 
   @override
@@ -311,7 +309,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
-    await _notificationService.cancelDoseNotifications(id);
   }
 
   @override
@@ -319,7 +316,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final medications = await getAllMedications();
     final db = await database;
     final batch = db.batch();
-    final List<Dose> newDoses = [];
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -361,7 +357,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 status: DoseStatus.upcoming,
               );
               batch.insert(_dosesTableName, _doseToMap(dose));
-              newDoses.add(dose);
             }
           }
         }
@@ -403,7 +398,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
                   status: DoseStatus.upcoming,
                 );
                 batch.insert(_dosesTableName, _doseToMap(dose));
-                newDoses.add(dose);
               }
             }
           }
@@ -426,10 +420,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
     await batch.commit(noResult: true);
 
-    for (final dose in newDoses) {
-      await _notificationService.scheduleDoseNotifications(dose);
-    }
-
     // Delete doses older than 3 months
     final threeMonthsAgo = now.subtract(const Duration(days: 90));
     await db.delete(
@@ -445,6 +435,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       'medicationId': dose.medicationId,
       'time': dose.time.toIso8601String(),
       'status': dose.status.toString().split('.').last,
+      'notificationSentCount': dose.notificationSentCount,
     };
   }
 
@@ -461,6 +452,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
             (map['status'] as String? ?? 'upcoming'),
         orElse: () => DoseStatus.upcoming,
       ),
+      notificationSentCount: map['notificationSentCount'] as int? ?? 0,
     );
   }
 }

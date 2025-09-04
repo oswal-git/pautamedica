@@ -8,6 +8,7 @@ class Dose extends Equatable {
   final String medicationImagePath;
   final DateTime time;
   final DoseStatus status;
+  final int notificationSentCount;
 
   const Dose({
     required this.id,
@@ -16,6 +17,7 @@ class Dose extends Equatable {
     required this.medicationImagePath,
     required this.time,
     required this.status,
+    this.notificationSentCount = 0,
   });
 
   Dose copyWith({
@@ -25,6 +27,7 @@ class Dose extends Equatable {
     String? medicationImagePath,
     DateTime? time,
     DoseStatus? status,
+    int? notificationSentCount,
   }) {
     return Dose(
       id: id ?? this.id,
@@ -33,9 +36,10 @@ class Dose extends Equatable {
       medicationImagePath: medicationImagePath ?? this.medicationImagePath,
       time: time ?? this.time,
       status: status ?? this.status,
+      notificationSentCount: notificationSentCount ?? this.notificationSentCount,
     );
   }
 
   @override
-  List<Object?> get props => [id, medicationId, medicationName, medicationImagePath, time, status];
+  List<Object?> get props => [id, medicationId, medicationName, medicationImagePath, time, status, notificationSentCount];
 }

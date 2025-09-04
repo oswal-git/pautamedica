@@ -1,14 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
+
+final StreamController<NotificationResponse> didReceiveLocalNotificationStream =
+    StreamController<NotificationResponse>.broadcast();
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  NotificationService();
+
   Future<void> init() async {
-    tz.initializeTimeZones(); // Initialize timezone
+    tz.initializeTimeZones();
+
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'medication_channel', // id
+      'Medication Reminders', // title
+      description: 'Notifications for medication reminders', // description
+      importance: Importance.max,
+    );
+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('app_icon');
 
@@ -16,93 +35,49 @@ class NotificationService {
       android: initializationSettingsAndroid,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  }
-
-  Future<void> scheduleNotification(
-      {required int id,
-      required String title,
-      required String body,
-      required DateTime scheduledTime}) async {
-    try {
-      await flutterLocalNotificationsPlugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tz.TZDateTime.from(scheduledTime, tz.local),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'your channel id', // Elige un ID de canal
-            'your channel name', // Elige un nombre de canal
-            channelDescription: 'your channel description', // Descripción del canal
-            importance: Importance.max, // O la importancia que necesites
-            priority: Priority.high, // O la prioridad que necesites
-            ticker: 'ticker',
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      );
-      print("Alarma exacta programada para: $scheduledTime con ID: $id");
-    } catch (e) {
-      print("Error al programar la notificación exacta: $e");
-    }
-  }
-
-  Future<void> scheduleDoseNotifications(Dose dose) async {
-    final now = DateTime.now();
-    if (dose.time.isBefore(now)) {
-      // Don't schedule notifications for past doses
-      return;
-    }
-
-    // Initial notification
-    await scheduleNotification(
-      id: dose.id.hashCode,
-      title: 'Hora de tomar la medicación',
-      body: 'Es hora de tomar ${dose.medicationName}',
-      scheduledTime: dose.time,
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
     );
-
-    // Reminders
-    final reminderTimes = [
-      dose.time.add(const Duration(hours: 1)),
-      dose.time.add(const Duration(hours: 2)),
-      dose.time.add(const Duration(hours: 3)),
-    ];
-
-    for (int i = 0; i < reminderTimes.length; i++) {
-      final reminderTime = reminderTimes[i];
-      if (reminderTime.isAfter(now)) {
-        await scheduleNotification(
-          id: dose.id.hashCode + i + 1,
-          title: 'Recordatorio de medicación',
-          body: 'No te olvides de tomar ${dose.medicationName}',
-          scheduledTime: reminderTime,
-        );
-      }
-    }
-
-    // Midnight reminder
-    final midnightOfNextDay = DateTime(dose.time.year, dose.time.month, dose.time.day + 1);
-    if (midnightOfNextDay.isAfter(now)) {
-      await scheduleNotification(
-        id: dose.id.hashCode + 4, // Use a unique ID for midnight reminder
-        title: 'Recordatorio final de medicación',
-        body: 'Último recordatorio para ${dose.medicationName}',
-        scheduledTime: midnightOfNextDay,
-      );
-    }
   }
 
-  Future<void> cancelDoseNotifications(String doseId) async {
-    // Cancel initial notification and 4 reminders (3 hourly + 1 midnight)
-    for (int i = 0; i < 5; i++) {
-      await flutterLocalNotificationsPlugin.cancel(doseId.hashCode + i);
-    }
-    print("Notificaciones canceladas para la dosis con ID base: ${doseId.hashCode}");
+  void onDidReceiveNotificationResponse(
+      NotificationResponse notificationResponse) async {
+    didReceiveLocalNotificationStream.add(notificationResponse);
   }
 
-  Future<void> cancelNotification(int id) async {
-    await flutterLocalNotificationsPlugin.cancel(id);
+  Future<void> showNotification({
+    required Dose dose,
+    required String title,
+    required String body,
+  }) async {
+    print("NotificationService: Attempting to show notification for ${dose.medicationName}");
+    final AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'medication_channel', // Use the static channel ID
+      'Medication Reminders', // Use the static channel name
+      channelDescription: 'Notifications for medication reminders',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+    final NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
+    await flutterLocalNotificationsPlugin.show(
+      dose.id.hashCode, // notification id
+      title,
+      body,
+      platformChannelSpecifics,
+      payload: dose.id,
+    );
+    print("NotificationService: Notification shown for ${dose.medicationName}");
+  }
+
+  Future<void> cancelNotification(String doseId) async {
+    await flutterLocalNotificationsPlugin.cancel(doseId.hashCode);
+  }
+
+  Future<void> cancelAllNotifications() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
   }
 }

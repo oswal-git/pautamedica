@@ -132,7 +132,12 @@ class _MedicationListPageState extends State<MedicationListPage> {
             }
 
             return ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(
+                left: 16,
+                top: 16,
+                right: 16,
+                bottom: 80, // Added extra bottom padding for the FAB
+              ),
               itemCount: state.medications.length,
               itemBuilder: (context, index) {
                 final medication = state.medications[index];

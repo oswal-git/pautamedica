@@ -2,6 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"> <!-- Add this line -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
         <application
         android:enableOnBackInvokedCallback="true"
         android:label="pautamedica"
@@ -38,6 +39,14 @@
             android:exported="true"
             tools:replace="android:exported"> <!-- Add this line -->
         </receiver>
+        <service
+            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
+            android:exported="false"
+            tools:replace="android:exported" />
+        <service
+            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+            android:exported="false"
+            tools:replace="android:exported" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
