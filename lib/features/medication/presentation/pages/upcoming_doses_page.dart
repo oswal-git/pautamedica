@@ -35,6 +35,7 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                   builder: (context) => const PastDosesPage(),
                 ),
               ).then((_) {
+                if (!mounted) return;
                 context.read<MedicationBloc>().add(LoadUpcomingDoses());
               });
             },
@@ -48,6 +49,7 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                   builder: (context) => const MedicationListPage(),
                 ),
               ).then((_) {
+                if (!mounted) return;
                 // When returning from MedicationListPage, reload the doses
                 context.read<MedicationBloc>().add(LoadUpcomingDoses());
               });

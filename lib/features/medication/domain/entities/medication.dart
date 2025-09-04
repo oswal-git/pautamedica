@@ -9,6 +9,7 @@ class Medication extends Equatable {
   final String imagePath;
   final List<DateTime> schedules;
   final DateTime createdAt;
+  final DateTime? firstDoseDate; // New field
 
   // New fields for repetition
   final RepetitionType repetitionType;
@@ -23,6 +24,7 @@ class Medication extends Equatable {
     required this.imagePath,
     required this.schedules,
     required this.createdAt,
+    this.firstDoseDate,
     this.repetitionType = RepetitionType.none,
     this.repetitionInterval,
     this.indefinite = false,
@@ -36,6 +38,7 @@ class Medication extends Equatable {
     String? imagePath,
     List<DateTime>? schedules,
     DateTime? createdAt,
+    DateTime? firstDoseDate, // New field
     RepetitionType? repetitionType,
     int? repetitionInterval,
     bool? indefinite,
@@ -48,6 +51,7 @@ class Medication extends Equatable {
       imagePath: imagePath ?? this.imagePath,
       schedules: schedules ?? this.schedules,
       createdAt: createdAt ?? this.createdAt,
+      firstDoseDate: firstDoseDate ?? this.firstDoseDate,
       repetitionType: repetitionType ?? this.repetitionType,
       repetitionInterval: repetitionInterval ?? this.repetitionInterval,
       indefinite: indefinite ?? this.indefinite,
@@ -63,6 +67,7 @@ class Medication extends Equatable {
         imagePath,
         schedules,
         createdAt,
+        firstDoseDate,
         repetitionType,
         repetitionInterval,
         indefinite,

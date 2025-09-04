@@ -31,11 +31,13 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
   String _imagePath = '';
   List<DateTime> _schedules = [];
   final List<TimeOfDay> _timePickers = [];
+  DateTime? _firstDoseDate;
 
   RepetitionType _repetitionType = RepetitionType.none;
   int _repetitionInterval = 1;
   bool _isIndefinite = true;
   DateTime _endDate = DateTime.now().add(const Duration(days: 30));
+  bool _isPickerActive = false;
 
   @override
   void initState() {
@@ -47,12 +49,16 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
       _schedules = List.from(widget.medication!.schedules);
       _timePickers.addAll(
           _schedules.map((dt) => TimeOfDay(hour: dt.hour, minute: dt.minute)));
+      _firstDoseDate =
+          widget.medication!.firstDoseDate ?? widget.medication!.createdAt;
       _repetitionType = widget.medication!.repetitionType;
       _repetitionInterval = widget.medication!.repetitionInterval ?? 1;
       _repetitionIntervalController.text = _repetitionInterval.toString();
       _isIndefinite = widget.medication!.indefinite;
       _endDate = widget.medication!.endDate ??
           DateTime.now().add(const Duration(days: 30));
+    } else {
+      _firstDoseDate = DateTime.now();
     }
   }
 
@@ -280,6 +286,13 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
             },
           ),
         const SizedBox(height: 24),
+        ListTile(
+          title: Text(
+              'Fecha de primera toma: ${_firstDoseDate != null ? DateFormat('dd/MM/yyyy').format(_firstDoseDate!) : 'No establecida'}'),
+          trailing: const Icon(Icons.calendar_today),
+          onTap: _pickFirstDoseDate,
+        ),
+        const SizedBox(height: 24),
         const Text(
           'Frecuencia de la Toma',
           style: TextStyle(
@@ -388,6 +401,20 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     }
   }
 
+  Future<void> _pickFirstDoseDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _firstDoseDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (pickedDate != null && pickedDate != _firstDoseDate) {
+      setState(() {
+        _firstDoseDate = pickedDate;
+      });
+    }
+  }
+
   Future<void> _pickEndDate() async {
     final pickedDate = await showDatePicker(
       context: context,
@@ -424,6 +451,12 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
   }
 
   Future<void> _pickImage() async {
+    if (_isPickerActive) return;
+
+    setState(() {
+      _isPickerActive = true;
+    });
+
     final ImagePicker picker = ImagePicker();
 
     showModalBottomSheet(
@@ -473,7 +506,11 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      setState(() {
+        _isPickerActive = false;
+      });
+    });
   }
 
   void _addTimePicker() async {
@@ -540,13 +577,16 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         posology: _posologyController.text.trim(),
         imagePath: _imagePath,
         schedules: _schedules,
+        firstDoseDate: _firstDoseDate,
         repetitionType: _repetitionType,
         repetitionInterval: _repetitionInterval,
         indefinite: _isIndefinite,
         endDate: _isIndefinite ? null : _endDate,
       );
 
-      context.read<MedicationBloc>().add(UpdateMedicationEvent(updatedMedication));
+      context
+          .read<MedicationBloc>()
+          .add(UpdateMedicationEvent(updatedMedication));
     } else {
       final newMedication = Medication(
         id: DateTime.now().toIso8601String(),
@@ -555,12 +595,13 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         imagePath: _imagePath,
         schedules: _schedules,
         createdAt: DateTime.now(),
+        firstDoseDate: _firstDoseDate ?? DateTime.now(),
         repetitionType: _repetitionType,
         repetitionInterval: _repetitionInterval,
         indefinite: _isIndefinite,
         endDate: _isIndefinite ? null : _endDate,
       );
-            context.read<MedicationBloc>().add(AddMedicationEvent(newMedication));
+      context.read<MedicationBloc>().add(AddMedicationEvent(newMedication));
     }
 
     Navigator.pop(context);

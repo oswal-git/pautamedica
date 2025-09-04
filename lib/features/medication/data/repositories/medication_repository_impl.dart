@@ -30,17 +30,17 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final path = join(documentsDirectory.path, 'medications.db');
       return await openDatabase(
         path,
-        version: 3, // Increased version number
+        version: 4, // Incremented version
         onCreate: (db, version) async {
           await _createMedicationsTable(db);
           await _createDosesTable(db);
         },
         onUpgrade: (db, oldVersion, newVersion) async {
-          if (oldVersion < newVersion) {
-            await db.execute('DROP TABLE IF EXISTS $_medicationsTableName');
-            await db.execute('DROP TABLE IF EXISTS $_dosesTableName');
-            await _createMedicationsTable(db);
-            await _createDosesTable(db);
+          if (oldVersion < 4) {
+            await db.execute(
+                'ALTER TABLE $_medicationsTableName ADD COLUMN firstDoseDate TEXT');
+            await db.rawUpdate(
+                'UPDATE $_medicationsTableName SET firstDoseDate = createdAt WHERE firstDoseDate IS NULL');
           }
         },
       );
@@ -59,6 +59,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
         imagePath TEXT NOT NULL,
         schedules TEXT NOT NULL,
         createdAt TEXT NOT NULL,
+        firstDoseDate TEXT,
         repetitionType TEXT NOT NULL,
         repetitionInterval INTEGER,
         indefinite INTEGER NOT NULL,
@@ -158,6 +159,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       'schedules':
           medication.schedules.map((dt) => dt.toIso8601String()).join(','),
       'createdAt': medication.createdAt.toIso8601String(),
+      'firstDoseDate': medication.firstDoseDate?.toIso8601String(),
       'repetitionType': medication.repetitionType.toString().split('.').last,
       'repetitionInterval': medication.repetitionInterval,
       'indefinite': medication.indefinite ? 1 : 0,
@@ -180,8 +182,13 @@ class MedicationRepositoryImpl implements MedicationRepository {
       imagePath: map['imagePath'] as String,
       schedules: schedules,
       createdAt: DateTime.parse(map['createdAt'] as String),
+      firstDoseDate: map['firstDoseDate'] != null
+          ? DateTime.parse(map['firstDoseDate'] as String)
+          : null,
       repetitionType: RepetitionType.values.firstWhere(
-        (e) => e.toString().split('.').last == (map['repetitionType'] as String? ?? 'none'),
+        (e) =>
+            e.toString().split('.').last ==
+            (map['repetitionType'] as String? ?? 'none'),
         orElse: () => RepetitionType.none,
       ),
       repetitionInterval: map['repetitionInterval'] as int?,
@@ -315,15 +322,26 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final List<Dose> newDoses = [];
 
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final threeMonthsFromNow = now.add(const Duration(days: 90));
 
     for (final medication in medications) {
+      final startDate = medication.firstDoseDate != null &&
+              medication.firstDoseDate!.isAfter(medication.createdAt)
+          ? medication.firstDoseDate!
+          : medication.createdAt;
+
+      if (medication.firstDoseDate != null &&
+          medication.firstDoseDate!.isAfter(now)) {
+        continue;
+      }
+
       if (medication.repetitionType == RepetitionType.none) {
         for (final schedule in medication.schedules) {
           final doseTime = DateTime(
-            medication.createdAt.year,
-            medication.createdAt.month,
-            medication.createdAt.day,
+            startDate.year,
+            startDate.month,
+            startDate.day,
             schedule.hour,
             schedule.minute,
           );
@@ -348,7 +366,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
           }
         }
       } else {
-        var currentDate = medication.createdAt;
+        var currentDate = startDate;
+
+        if (currentDate.isBefore(today)) {
+          currentDate = today;
+        }
+
         while (currentDate.isBefore(threeMonthsFromNow)) {
           if (medication.endDate != null &&
               currentDate.isAfter(medication.endDate!)) {
