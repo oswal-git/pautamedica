@@ -21,6 +21,9 @@ class NotificationService {
       'Medication Reminders', // title
       description: 'Notifications for medication reminders', // description
       importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      // sound: RawResourceAndroidNotificationSound('my_custom_sound'),
     );
 
     await flutterLocalNotificationsPlugin
@@ -59,6 +62,8 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'ticker',
+      playSound: true,
+      enableVibration: true,
     );
     final NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
