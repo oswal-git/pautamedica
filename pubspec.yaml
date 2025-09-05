@@ -15,7 +15,7 @@ dependencies:
     flutter_local_notifications: ^19.4.1
     grouped_list: ^6.0.0 # O la última versión disponible en pub.dev
     image_picker: ^1.0.4
-    image_cropper: ^5.0.1
+    image_cropper: ^9.1.0
     intl: ^0.20.2
     path_provider: ^2.1.1
     path: ^1.8.3
