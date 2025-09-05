@@ -23,6 +23,7 @@ dependencies:
     timezone: ^0.10.1
     uuid: ^4.2.1
     workmanager: ^0.9.0+3
+    logger: ^2.4.0
 
 dev_dependencies:
     flutter_test:
