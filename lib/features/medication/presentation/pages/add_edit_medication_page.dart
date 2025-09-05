@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:pautamedica/features/medication/domain/entities/medication.dart';
@@ -478,9 +479,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
                     imageQuality: 85,
                   );
                   if (image != null) {
-                    setState(() {
-                      _imagePath = image.path;
-                    });
+                    _cropImage(image.path);
                   }
                 },
               ),
@@ -496,9 +495,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
                     imageQuality: 85,
                   );
                   if (image != null) {
-                    setState(() {
-                      _imagePath = image.path;
-                    });
+                    _cropImage(image.path);
                   }
                 },
               ),
@@ -511,6 +508,35 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         _isPickerActive = false;
       });
     });
+  }
+
+  Future<void> _cropImage(String imagePath) async {
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: imagePath,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Recortar Imagen',
+            toolbarColor: Colors.deepPurple.shade900,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        IOSUiSettings(
+          title: 'Recortar Imagen',
+        ),
+      ],
+    );
+    if (croppedFile != null) {
+      setState(() {
+        _imagePath = croppedFile.path;
+      });
+    }
   }
 
   void _addTimePicker() async {
