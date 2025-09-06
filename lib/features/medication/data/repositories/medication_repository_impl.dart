@@ -5,10 +5,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/domain/entities/repetition_type.dart';
+import 'package:logger/logger.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:pautamedica/features/medication/domain/entities/medication.dart';
 import 'package:pautamedica/features/medication/domain/repositories/medication_repository.dart';
 import 'package:pautamedica/features/medication/domain/usecases/past_doses_result.dart';
+
+final _logger = Logger();
 
 class MedicationRepositoryImpl implements MedicationRepository {
   static Database? _database;
@@ -27,7 +30,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final path = join(documentsDirectory.path, 'medications.db');
       return await openDatabase(
         path,
-        version: 5,
+        version: 6, // Increment version
         onCreate: (db, version) async {
           await _createMedicationsTable(db);
           await _createDosesTable(db);
@@ -43,10 +46,17 @@ class MedicationRepositoryImpl implements MedicationRepository {
             await db.execute(
                 'ALTER TABLE $_dosesTableName ADD COLUMN notificationSentCount INTEGER NOT NULL DEFAULT 0');
           }
+          if (oldVersion < 6) { // New migration for markedAt
+            await db.execute(
+                'ALTER TABLE $_dosesTableName ADD COLUMN markedAt TEXT');
+            // Migrate existing past doses to have markedAt = time
+            await db.rawUpdate(
+                "UPDATE $_dosesTableName SET markedAt = time WHERE status IN ('taken', 'notTaken') AND markedAt IS NULL");
+          }
         },
       );
     } catch (e) {
-      print('Repository: Error al inicializar base de datos: $e');
+      _logger.i('Repository: Error al inicializar base de datos: $e');
       rethrow;
     }
   }
@@ -76,7 +86,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
         medicationId TEXT NOT NULL,
         time TEXT NOT NULL,
         status TEXT NOT NULL,
-        notificationSentCount INTEGER NOT NULL DEFAULT 0
+        notificationSentCount INTEGER NOT NULL DEFAULT 0,
+        markedAt TEXT // New column
       )
     ''');
   }
@@ -85,11 +96,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
   Future<List<Medication>> getAllMedications() async {
     try {
       final db = await database;
-      final List<Map<String, dynamic>> maps = await db.query(_medicationsTableName);
+      final List<Map<String, dynamic>> maps =
+          await db.query(_medicationsTableName);
       final medications = maps.map((map) => _mapToMedication(map)).toList();
       return medications;
     } catch (e) {
-      print('Repository: Error en getAllMedications: $e');
+      _logger.i('Repository: Error en getAllMedications: $e');
       rethrow;
     }
   }
@@ -106,7 +118,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   }
 
   @override
-  Future<void> deleteMedication(String id) async {
+    Future<void> deleteMedication(String id) async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(
       _medicationsTableName,
@@ -268,7 +280,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
         m.imagePath as medicationImagePath,
         d.time,
         d.status,
-        d.notificationSentCount
+        d.notificationSentCount,
+        d.markedAt -- Include markedAt in SELECT
       FROM $_dosesTableName d
       INNER JOIN $_medicationsTableName m ON d.medicationId = m.id
       WHERE d.status = ? OR d.status = ?
@@ -287,7 +300,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
       }
     }
 
-    return PastDosesResult(doses: pastDoses, mostRecentDoseIds: mostRecentDoseIds);
+    return PastDosesResult(
+        doses: pastDoses, mostRecentDoseIds: mostRecentDoseIds);
   }
 
   @override
@@ -406,8 +420,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
             currentDate = currentDate
                 .add(Duration(days: medication.repetitionInterval ?? 1));
           } else if (medication.repetitionType == RepetitionType.weekly) {
-            currentDate = currentDate.add(
-                Duration(days: (medication.repetitionInterval ?? 1) * 7));
+            currentDate = currentDate
+                .add(Duration(days: (medication.repetitionInterval ?? 1) * 7));
           } else if (medication.repetitionType == RepetitionType.monthly) {
             currentDate = DateTime(
                 currentDate.year,
@@ -436,6 +450,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       'time': dose.time.toIso8601String(),
       'status': dose.status.toString().split('.').last,
       'notificationSentCount': dose.notificationSentCount,
+      'markedAt': dose.markedAt?.toIso8601String(), // New field
     };
   }
 
@@ -453,6 +468,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
         orElse: () => DoseStatus.upcoming,
       ),
       notificationSentCount: map['notificationSentCount'] as int? ?? 0,
+      markedAt: map['markedAt'] != null
+          ? DateTime.parse(map['markedAt'] as String)
+          : null, // New field
     );
   }
 }

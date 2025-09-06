@@ -24,9 +24,11 @@ class PastDoseListItem extends StatelessWidget {
   Widget _getStatusIcon(DoseStatus status) {
     switch (status) {
       case DoseStatus.taken:
-        return const Icon(Icons.check_circle, color: Colors.green, size: 28); // Reduced icon size
+        return const Icon(Icons.check_circle,
+            color: Colors.green, size: 28); // Reduced icon size
       case DoseStatus.notTaken:
-        return const Icon(Icons.cancel, color: Colors.red, size: 28); // Reduced icon size
+        return const Icon(Icons.cancel,
+            color: Colors.red, size: 28); // Reduced icon size
       default:
         return const SizedBox.shrink();
     }
@@ -44,7 +46,8 @@ class PastDoseListItem extends StatelessWidget {
         padding: const EdgeInsets.all(12), // Reduced padding
         child: Row(
           children: [
-            GestureDetector( // Added GestureDetector
+            GestureDetector(
+              // Added GestureDetector
               onTap: onImageTap, // Assign onImageTap
               child: SizedBox(
                 width: 64, // Reduced size
@@ -56,10 +59,12 @@ class PastDoseListItem extends StatelessWidget {
                           File(dose.medicationImagePath),
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return const MedicationImagePlaceholder(size: 64, iconSize: 32); // Reduced icon size
+                            return const MedicationImagePlaceholder(
+                                size: 64, iconSize: 32); // Reduced icon size
                           },
                         )
-                      : const MedicationImagePlaceholder(size: 64, iconSize: 32), // Reduced icon size
+                      : const MedicationImagePlaceholder(
+                          size: 64, iconSize: 32), // Reduced icon size
                 ),
               ),
             ),
@@ -83,13 +88,23 @@ class PastDoseListItem extends StatelessWidget {
                       color: Colors.grey.shade600,
                     ),
                   ),
+                  if (dose.markedAt != null) // Display markedAt if available
+                    Text(
+                      'Tomada el ${DateFormat('dd/MM/yyyy HH:mm').format(dose.markedAt!)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                 ],
               ),
             ),
             Row(
               children: [
                 _getStatusIcon(dose.status),
-                if (isMostRecent && onUnmark != null) // Conditionally show unmark button
+                if (isMostRecent &&
+                    onUnmark != null) // Conditionally show unmark button
                   IconButton(
                     icon: const Icon(Icons.undo), // Or Icons.refresh
                     onPressed: onUnmark,

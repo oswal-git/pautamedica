@@ -29,29 +29,29 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {
+              final bloc = context.read<MedicationBloc>();
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const PastDosesPage(),
                 ),
               ).then((_) {
-                if (!mounted) return;
-                context.read<MedicationBloc>().add(LoadUpcomingDoses());
+                bloc.add(LoadUpcomingDoses());
               });
             },
           ),
           IconButton(
             icon: const Icon(Icons.medication),
             onPressed: () {
+              final bloc = context.read<MedicationBloc>();
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const MedicationListPage(),
                 ),
               ).then((_) {
-                if (!mounted) return;
                 // When returning from MedicationListPage, reload the doses
-                context.read<MedicationBloc>().add(LoadUpcomingDoses());
+                bloc.add(LoadUpcomingDoses());
               });
             },
           ),

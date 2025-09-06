@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/medication_list_item.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/add_medication_fab.dart';
@@ -14,6 +15,8 @@ class MedicationListPage extends StatefulWidget {
 }
 
 class _MedicationListPageState extends State<MedicationListPage> {
+  final _logger = Logger();
+
   @override
   void initState() {
     super.initState();
@@ -43,10 +46,10 @@ class _MedicationListPageState extends State<MedicationListPage> {
               current is MedicationInitial;
         },
         builder: (context, state) {
-          print('MedicationListPage: Estado actual: ${state.runtimeType}');
+          _logger.i('MedicationListPage: Estado actual: ${state.runtimeType}');
 
           if (state is MedicationLoading || state is UpcomingDosesLoaded) {
-            print('MedicationListPage: Mostrando loading...');
+            _logger.i('MedicationListPage: Mostrando loading...');
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -65,7 +68,7 @@ class _MedicationListPageState extends State<MedicationListPage> {
           }
 
           if (state is MedicationError) {
-            print(
+            _logger.e(
                 'MedicationListPage: Estado MedicationError: ${state.message}');
             return Center(
               child: Column(
@@ -95,10 +98,10 @@ class _MedicationListPageState extends State<MedicationListPage> {
           }
 
           if (state is MedicationLoaded) {
-            print(
+            _logger.i(
                 'MedicationListPage: Estado MedicationLoaded con ${state.medications.length} medicamentos');
             if (state.medications.isEmpty) {
-              print(
+              _logger.i(
                   'MedicationListPage: Lista vacía, mostrando mensaje de no medicamentos');
               return Center(
                 child: Column(
@@ -153,7 +156,7 @@ class _MedicationListPageState extends State<MedicationListPage> {
             );
           }
 
-          print('MedicationListPage: Estado desconocido: ${state.runtimeType}');
+          _logger.w('MedicationListPage: Estado desconocido: ${state.runtimeType}');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

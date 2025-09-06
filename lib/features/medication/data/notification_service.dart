@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:logger/logger.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
@@ -8,6 +9,7 @@ final StreamController<NotificationResponse> didReceiveLocalNotificationStream =
     StreamController<NotificationResponse>.broadcast();
 
 class NotificationService {
+  final _logger = Logger();
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
@@ -54,7 +56,7 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    print("NotificationService: Attempting to show notification for ${dose.medicationName}");
+    _logger.i("NotificationService: Attempting to show notification for ${dose.medicationName}");
     final AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'medication_channel', // Use the static channel ID
       'Medication Reminders', // Use the static channel name
@@ -75,7 +77,7 @@ class NotificationService {
       platformChannelSpecifics,
       payload: dose.id,
     );
-    print("NotificationService: Notification shown for ${dose.medicationName}");
+    _logger.i("NotificationService: Notification shown for ${dose.medicationName}");
   }
 
   Future<void> cancelNotification(String doseId) async {

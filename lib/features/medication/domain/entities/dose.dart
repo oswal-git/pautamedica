@@ -9,6 +9,7 @@ class Dose extends Equatable {
   final DateTime time;
   final DoseStatus status;
   final int notificationSentCount;
+  final DateTime? markedAt; // New field
 
   const Dose({
     required this.id,
@@ -18,6 +19,7 @@ class Dose extends Equatable {
     required this.time,
     required this.status,
     this.notificationSentCount = 0,
+    this.markedAt, // New field
   });
 
   Dose copyWith({
@@ -28,6 +30,7 @@ class Dose extends Equatable {
     DateTime? time,
     DoseStatus? status,
     int? notificationSentCount,
+    DateTime? markedAt, // New field
   }) {
     return Dose(
       id: id ?? this.id,
@@ -37,9 +40,19 @@ class Dose extends Equatable {
       time: time ?? this.time,
       status: status ?? this.status,
       notificationSentCount: notificationSentCount ?? this.notificationSentCount,
+      markedAt: markedAt ?? this.markedAt, // New field
     );
   }
 
   @override
-  List<Object?> get props => [id, medicationId, medicationName, medicationImagePath, time, status, notificationSentCount];
+  List<Object?> get props => [
+            id,
+            medicationId,
+            medicationName,
+            medicationImagePath,
+            time,
+            status,
+            notificationSentCount,
+            markedAt, // New field
+          ];
 }

@@ -23,12 +23,13 @@ class App extends StatefulWidget {
   State<App> createState() => _AppState();
 }
 
-class _AppState extends State<App> {
+class _AppState extends State<App> with WidgetsBindingObserver {
   final NotificationService _notificationService = NotificationService();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // Add this line
     _notificationService.init();
     _notificationService.flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -36,6 +37,20 @@ class _AppState extends State<App> {
         ?.requestNotificationsPermission();
     _configureDidReceiveLocalNotificationSubject();
     _checkNotificationLaunch();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // Remove this line
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Dispatch an event to refresh data when the app resumes
+      BlocProvider.of<MedicationBloc>(context).add(GenerateDosesEvent());
+    }
   }
 
   void _configureDidReceiveLocalNotificationSubject() {
@@ -46,8 +61,9 @@ class _AppState extends State<App> {
   }
 
   Future<void> _checkNotificationLaunch() async {
-    final notificationAppLaunchDetails =
-        await _notificationService.flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+    final notificationAppLaunchDetails = await _notificationService
+        .flutterLocalNotificationsPlugin
+        .getNotificationAppLaunchDetails();
     if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
       _handleNotificationNavigation();
     }
@@ -78,6 +94,7 @@ class _AppState extends State<App> {
         )..add(GenerateDosesEvent());
       },
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey,
         title: 'Pauta Médica',
         theme: ThemeData(
