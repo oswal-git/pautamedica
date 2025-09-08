@@ -81,11 +81,13 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                 return DoseListItem(
                   dose: dose,
                   onStatusChanged: (status) {
-                    context
-                        .read<MedicationBloc>()
-                        .add(UpdateDoseStatusEvent(dose, status, refreshPastDoses: false)); // Explicitly set to false
+                    context.read<MedicationBloc>().add(UpdateDoseStatusEvent(
+                        dose, status,
+                        refreshPastDoses: false)); // Explicitly set to false
                   },
-                  onImageTap: (imagePaths) => _showImageFullScreen(context, dose.medicationName, imagePaths),
+                  onImageTap: (imagePaths, initialIndex) =>
+                      _showImageFullScreen(context, dose.medicationName,
+                          imagePaths, initialIndex),
                 );
               },
             );
@@ -101,7 +103,8 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
     );
   }
 
-  void _showImageFullScreen(BuildContext context, String medicationName, List<String> imagePaths) {
+  void _showImageFullScreen(BuildContext context, String medicationName,
+      List<String> imagePaths, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -132,12 +135,14 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                           File(imagePaths[0]),
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            return const MedicationImagePlaceholder(size: 200, iconSize: 80);
+                            return const MedicationImagePlaceholder(
+                                size: 200, iconSize: 80);
                           },
                         ),
                       ),
                     )
                   : PageView.builder(
+                      controller: PageController(initialPage: initialIndex),
                       itemCount: imagePaths.length,
                       itemBuilder: (context, index) {
                         return Center(
@@ -146,7 +151,8 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                               File(imagePaths[index]),
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
-                                return const MedicationImagePlaceholder(size: 200, iconSize: 80);
+                                return const MedicationImagePlaceholder(
+                                    size: 200, iconSize: 80);
                               },
                             ),
                           ),

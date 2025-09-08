@@ -45,12 +45,15 @@ class _PastDosesPageState extends State<PastDosesPage> {
               itemCount: state.doses.length,
               itemBuilder: (context, index) {
                 final dose = state.doses[index];
-                final isMostRecent = state.mostRecentDoseIds[dose.medicationId] == dose.id;
+                final isMostRecent =
+                    state.mostRecentDoseIds[dose.medicationId] == dose.id;
                 return PastDoseListItem(
                   dose: dose,
                   isMostRecent: isMostRecent,
                   onDelete: () {
-                    context.read<MedicationBloc>().add(DeleteDoseEvent(dose.id));
+                    context
+                        .read<MedicationBloc>()
+                        .add(DeleteDoseEvent(dose.id));
                   },
                   onUnmark: isMostRecent
                       ? () {
@@ -63,7 +66,9 @@ class _PastDosesPageState extends State<PastDosesPage> {
                               );
                         }
                       : null,
-                  onImageTap: (imagePaths) => _showImageFullScreen(context, dose.medicationName, imagePaths),
+                  onImageTap: (imagePaths, initialIndex) =>
+                      _showImageFullScreen(context, dose.medicationName,
+                          imagePaths, initialIndex),
                 );
               },
             );
@@ -77,7 +82,8 @@ class _PastDosesPageState extends State<PastDosesPage> {
     );
   }
 
-  void _showImageFullScreen(BuildContext context, String medicationName, List<String> imagePaths) {
+  void _showImageFullScreen(BuildContext context, String medicationName,
+      List<String> imagePaths, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -108,12 +114,14 @@ class _PastDosesPageState extends State<PastDosesPage> {
                           File(imagePaths[0]),
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            return const MedicationImagePlaceholder(size: 200, iconSize: 80);
+                            return const MedicationImagePlaceholder(
+                                size: 200, iconSize: 80);
                           },
                         ),
                       ),
                     )
                   : PageView.builder(
+                      controller: PageController(initialPage: initialIndex),
                       itemCount: imagePaths.length,
                       itemBuilder: (context, index) {
                         return Center(
@@ -122,7 +130,8 @@ class _PastDosesPageState extends State<PastDosesPage> {
                               File(imagePaths[index]),
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
-                                return const MedicationImagePlaceholder(size: 200, iconSize: 80);
+                                return const MedicationImagePlaceholder(
+                                    size: 200, iconSize: 80);
                               },
                             ),
                           ),
@@ -134,4 +143,3 @@ class _PastDosesPageState extends State<PastDosesPage> {
     );
   }
 }
-

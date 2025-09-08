@@ -381,10 +381,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
       } else {
         var currentDate = startDate;
 
-        if (currentDate.isBefore(today)) {
-          currentDate = today;
-        }
-
         while (currentDate.isBefore(threeMonthsFromNow)) {
           if (medication.endDate != null &&
               currentDate.isAfter(medication.endDate!)) {

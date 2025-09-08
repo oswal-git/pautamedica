@@ -42,7 +42,7 @@ class MedicationListItem extends StatelessWidget {
               GestureDetector(
                 onTap: () => onImageTap(
                   medication.imagePaths,
-                  medication.imagePaths.length >= 2 ? 1 : 0,
+                  0,
                 ),
                 child: Container(
                   width: 64, // Reduced size
@@ -53,11 +53,9 @@ class MedicationListItem extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                                        child: medication.imagePaths.isNotEmpty
+                    child: medication.imagePaths.isNotEmpty
                         ? Image.file(
-                            File(medication.imagePaths.length >= 2
-                                ? medication.imagePaths[1]
-                                : medication.imagePaths[0]),
+                            File(medication.imagePaths[0]),
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return const MedicationImagePlaceholder(

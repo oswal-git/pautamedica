@@ -10,7 +10,7 @@ class PastDoseListItem extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onUnmark; // New callback
   final bool isMostRecent; // New property
-  final Function(List<String>)? onImageTap; // Changed callback signature
+  final Function(List<String>, int)? onImageTap; // Changed callback signature
 
   const PastDoseListItem({
     super.key,
@@ -54,7 +54,13 @@ class PastDoseListItem extends StatelessWidget {
           children: [
             GestureDetector(
               // Added GestureDetector
-              onTap: onImageTap != null ? () => onImageTap!(dose.medicationImagePaths) : null, // Pass all image paths
+              onTap: onImageTap != null
+                  ? () {
+                      final initialIndex =
+                          dose.medicationImagePaths.length > 1 ? 1 : 0;
+                      onImageTap!(dose.medicationImagePaths, initialIndex);
+                    }
+                  : null,
               child: SizedBox(
                 width: 64, // Reduced size
                 height: 64, // Reduced size

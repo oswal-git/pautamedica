@@ -163,45 +163,47 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
             ),
           )
         else
-          SizedBox(
-            height: 200,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                PageView.builder(
-                  controller: _pageController,
-                  itemCount: _imagePaths.length,
-                  itemBuilder: (context, index) {
-                    return _buildImagePreview(_imagePaths[index], index);
-                  },
-                ),
-                if (_imagePaths.length > 1)
-                  Positioned(
-                    left: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios),
-                      onPressed: () {
-                        _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.ease,
-                        );
-                      },
-                    ),
+          Center(
+            child: SizedBox(
+              height: 250,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  PageView.builder(
+                    controller: _pageController,
+                    itemCount: _imagePaths.length,
+                    itemBuilder: (context, index) {
+                      return _buildImagePreview(_imagePaths[index], index);
+                    },
                   ),
-                if (_imagePaths.length > 1)
-                  Positioned(
-                    right: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_forward_ios),
-                      onPressed: () {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.ease,
-                        );
-                      },
+                  if (_imagePaths.length > 1 && _currentPage > 0)
+                    Positioned(
+                      left: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_ios),
+                        onPressed: () {
+                          _pageController.previousPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.ease,
+                          );
+                        },
+                      ),
                     ),
-                  ),
-              ],
+                  if (_imagePaths.length > 1 && _currentPage < _imagePaths.length - 1)
+                    Positioned(
+                      right: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_forward_ios),
+                        onPressed: () {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.ease,
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         const SizedBox(height: 8),
@@ -222,45 +224,71 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
   }
 
   Widget _buildImagePreview(String imagePath, int index) {
-    return Stack(
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        GestureDetector(
-          onTap: () => _pickImage(index), // Pass index for editing existing image
-          child: Container(
-            width: 200,
-            height: 200,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.grey.shade300,
-                width: 2,
-                style: BorderStyle.solid,
-              ),
-              color: Colors.grey.shade50,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.file(
-                File(imagePath),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const MedicationImagePlaceholder(size: 200, iconSize: 80);
-                },
-              ),
-            ),
+        Text(
+          _getImageTitle(index),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: IconButton(
-            icon: const Icon(Icons.delete_forever, color: Colors.red),
-            onPressed: () => _deleteImage(index),
-          ),
+        const SizedBox(height: 8),
+        Stack(
+          children: [
+            GestureDetector(
+              onTap: () =>
+                  _pickImage(index), // Pass index for editing existing image
+              child: Container(
+                width: 200,
+                height: 200,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.grey.shade300,
+                    width: 2,
+                    style: BorderStyle.solid,
+                  ),
+                  color: Colors.grey.shade50,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    File(imagePath),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const MedicationImagePlaceholder(
+                          size: 200, iconSize: 80);
+                    },
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.delete_forever, color: Colors.red),
+                onPressed: () => _deleteImage(index),
+              ),
+            ),
+          ],
         ),
       ],
     );
+  }
+
+  String _getImageTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'Presentación';
+      case 1:
+        return 'Dósis/comprimido';
+      default:
+        return '';
+    }
   }
 
   Widget _buildNameField() {

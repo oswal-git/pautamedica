@@ -8,7 +8,7 @@ import 'package:pautamedica/features/medication/presentation/widgets/medication_
 class DoseListItem extends StatelessWidget {
   final Dose dose;
   final Function(DoseStatus) onStatusChanged;
-  final Function(List<String>)? onImageTap; // Changed callback signature
+  final Function(List<String>, int)? onImageTap;
 
   const DoseListItem({
     super.key,
@@ -53,7 +53,13 @@ class DoseListItem extends StatelessWidget {
         child: Row(
           children: [
             GestureDetector( // Added GestureDetector
-              onTap: onImageTap != null ? () => onImageTap!(dose.medicationImagePaths) : null, // Pass all image paths
+              onTap: onImageTap != null
+                  ? () {
+                      final initialIndex =
+                          dose.medicationImagePaths.length > 1 ? 1 : 0;
+                      onImageTap!(dose.medicationImagePaths, initialIndex);
+                    }
+                  : null,
               child: SizedBox(
                 width: 64, // Reduced size
                 height: 64, // Reduced size
