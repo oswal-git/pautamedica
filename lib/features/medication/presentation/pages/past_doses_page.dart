@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/past_dose_list_item.dart';
+import 'package:pautamedica/features/medication/presentation/widgets/medication_image_placeholder.dart';
 
 class PastDosesPage extends StatefulWidget {
   const PastDosesPage({super.key});
@@ -62,7 +63,7 @@ class _PastDosesPageState extends State<PastDosesPage> {
                               );
                         }
                       : null,
-                  onImageTap: () => _showImageFullScreen(context, dose.medicationName, dose.medicationImagePath),
+                  onImageTap: (imagePaths) => _showImageFullScreen(context, dose.medicationName, imagePaths),
                 );
               },
             );
@@ -76,7 +77,7 @@ class _PastDosesPageState extends State<PastDosesPage> {
     );
   }
 
-  void _showImageFullScreen(BuildContext context, String medicationName, String imagePath) {
+  void _showImageFullScreen(BuildContext context, String medicationName, List<String> imagePaths) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -92,22 +93,45 @@ class _PastDosesPageState extends State<PastDosesPage> {
             backgroundColor: Colors.deepPurple.shade900,
             foregroundColor: Colors.white,
           ),
-          body: Center(
-            child: InteractiveViewer(
-              child: (imagePath.isNotEmpty && File(imagePath).existsSync())
-                  ? Image.file(
-                      File(imagePath),
-                      fit: BoxFit.contain,
+          body: imagePaths.isEmpty
+              ? const Center(
+                  child: Icon(
+                    Icons.image_not_supported,
+                    size: 100,
+                    color: Colors.grey,
+                  ),
+                )
+              : imagePaths.length == 1
+                  ? Center(
+                      child: InteractiveViewer(
+                        child: Image.file(
+                          File(imagePaths[0]),
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const MedicationImagePlaceholder(size: 200, iconSize: 80);
+                          },
+                        ),
+                      ),
                     )
-                  : const Icon(
-                      Icons.image_not_supported,
-                      size: 100,
-                      color: Colors.grey,
+                  : PageView.builder(
+                      itemCount: imagePaths.length,
+                      itemBuilder: (context, index) {
+                        return Center(
+                          child: InteractiveViewer(
+                            child: Image.file(
+                              File(imagePaths[index]),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const MedicationImagePlaceholder(size: 200, iconSize: 80);
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
-            ),
-          ),
         ),
       ),
     );
   }
 }
+

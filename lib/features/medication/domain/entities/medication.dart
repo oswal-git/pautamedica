@@ -6,7 +6,7 @@ class Medication extends Equatable {
   final String id;
   final String name;
   final String posology;
-  final String imagePath;
+  final List<String> imagePaths;
   final List<DateTime> schedules;
   final DateTime createdAt;
   final DateTime? firstDoseDate; // New field
@@ -21,7 +21,7 @@ class Medication extends Equatable {
     required this.id,
     required this.name,
     required this.posology,
-    required this.imagePath,
+    required this.imagePaths,
     required this.schedules,
     required this.createdAt,
     this.firstDoseDate,
@@ -31,11 +31,11 @@ class Medication extends Equatable {
     this.endDate,
   });
 
-  Medication copyWith({
+    Medication copyWith({
     String? id,
     String? name,
     String? posology,
-    String? imagePath,
+    List<String>? imagePaths,
     List<DateTime>? schedules,
     DateTime? createdAt,
     DateTime? firstDoseDate, // New field
@@ -48,7 +48,7 @@ class Medication extends Equatable {
       id: id ?? this.id,
       name: name ?? this.name,
       posology: posology ?? this.posology,
-      imagePath: imagePath ?? this.imagePath,
+      imagePaths: imagePaths ?? this.imagePaths,
       schedules: schedules ?? this.schedules,
       createdAt: createdAt ?? this.createdAt,
       firstDoseDate: firstDoseDate ?? this.firstDoseDate,
@@ -64,7 +64,7 @@ class Medication extends Equatable {
         id,
         name,
         posology,
-        imagePath,
+        imagePaths,
         schedules,
         createdAt,
         firstDoseDate,

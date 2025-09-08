@@ -1,10 +1,22 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:pautamedica/app/app.dart';
 import 'package:pautamedica/app/bloc_observer.dart';
 import 'package:pautamedica/background_service.dart';
 import 'package:workmanager/workmanager.dart';
+
+// Import MedicationBloc and its dependencies
+import 'package:pautamedica/features/medication/data/repositories/medication_repository_impl.dart';
+import 'package:pautamedica/features/medication/domain/usecases/add_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/delete_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/generate_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
+import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 
 final _logger = Logger();
 
@@ -35,5 +47,22 @@ void main() {
     frequency: const Duration(hours: 1),
   );
   Bloc.observer = AppBlocObserver();
-  runApp(const App());
+  runApp(
+    BlocProvider(
+      create: (context) {
+        final medicationRepository = MedicationRepositoryImpl();
+        return MedicationBloc(
+          getMedications: GetMedications(medicationRepository),
+          addMedication: AddMedication(medicationRepository),
+          updateMedication: UpdateMedication(medicationRepository),
+          deleteMedication: DeleteMedication(medicationRepository),
+          getUpcomingDoses: GetUpcomingDoses(medicationRepository),
+          getPastDoses: GetPastDoses(medicationRepository),
+          updateDoseStatus: UpdateDoseStatus(medicationRepository),
+          generateDoses: GenerateDoses(medicationRepository),
+        )..add(GenerateDosesEvent());
+      },
+      child: const App(),
+    ),
+  );
 }

@@ -7,7 +7,7 @@ import 'package:pautamedica/features/medication/presentation/widgets/medication_
 class MedicationListItem extends StatelessWidget {
   final Medication medication;
   final VoidCallback onTap;
-  final VoidCallback onImageTap;
+  final Function(List<String> imagePaths, int initialIndex) onImageTap;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
@@ -40,7 +40,10 @@ class MedicationListItem extends StatelessWidget {
             children: [
               // Imagen del medicamento (tocable)
               GestureDetector(
-                onTap: onImageTap,
+                onTap: () => onImageTap(
+                  medication.imagePaths,
+                  medication.imagePaths.length >= 2 ? 1 : 0,
+                ),
                 child: Container(
                   width: 64, // Reduced size
                   height: 64, // Reduced size
@@ -50,15 +53,19 @@ class MedicationListItem extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: medication.imagePath.isNotEmpty
+                                        child: medication.imagePaths.isNotEmpty
                         ? Image.file(
-                            File(medication.imagePath),
+                            File(medication.imagePaths.length >= 2
+                                ? medication.imagePaths[1]
+                                : medication.imagePaths[0]),
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              return const MedicationImagePlaceholder(size: 64, iconSize: 32); // Reduced icon size
+                              return const MedicationImagePlaceholder(
+                                  size: 64, iconSize: 32);
                             },
                           )
-                        : const MedicationImagePlaceholder(size: 64, iconSize: 32), // Reduced icon size
+                        : const MedicationImagePlaceholder(
+                            size: 64, iconSize: 32),
                   ),
                 ),
               ),

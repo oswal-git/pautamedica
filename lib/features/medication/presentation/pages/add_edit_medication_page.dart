@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:pautamedica/features/medication/domain/entities/medication.dart';
 import 'package:pautamedica/features/medication/domain/entities/repetition_type.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
+
 import 'package:pautamedica/features/medication/presentation/widgets/medication_image_placeholder.dart';
+import 'package:pautamedica/features/medication/presentation/pages/cropper_page.dart';
 
 class AddEditMedicationPage extends StatefulWidget {
   final Medication? medication;
@@ -29,7 +31,9 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
   final _posologyController = TextEditingController();
   final _repetitionIntervalController = TextEditingController(text: '1');
 
-  String _imagePath = '';
+  List<String> _imagePaths = [];
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
   List<DateTime> _schedules = [];
   final List<TimeOfDay> _timePickers = [];
   DateTime? _firstDoseDate;
@@ -46,7 +50,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     if (widget.isEditing && widget.medication != null) {
       _nameController.text = widget.medication!.name;
       _posologyController.text = widget.medication!.posology;
-      _imagePath = widget.medication!.imagePath;
+      _imagePaths = List.from(widget.medication!.imagePaths);
       _schedules = List.from(widget.medication!.schedules);
       _timePickers.addAll(
           _schedules.map((dt) => TimeOfDay(hour: dt.hour, minute: dt.minute)));
@@ -61,6 +65,11 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     } else {
       _firstDoseDate = DateTime.now();
     }
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page!.round();
+      });
+    });
   }
 
   @override
@@ -68,6 +77,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     _nameController.dispose();
     _posologyController.dispose();
     _repetitionIntervalController.dispose();
+    _pageController.dispose(); // Dispose the PageController
     super.dispose();
   }
 
@@ -124,7 +134,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Foto del Medicamento',
+          'Fotos del Medicamento',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -132,48 +142,121 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
           ),
         ),
         const SizedBox(height: 12),
-        Center(
-          child: GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.grey.shade300,
-                  width: 2,
-                  style: BorderStyle.solid,
+        if (_imagePaths.isEmpty)
+          Center(
+            child: GestureDetector(
+              onTap: () => _pickImage(null), // Pass null for new image
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.grey.shade300,
+                    width: 2,
+                    style: BorderStyle.solid,
+                  ),
+                  color: Colors.grey.shade50,
                 ),
-                color: Colors.grey.shade50,
+                child: const MedicationImagePlaceholder(size: 200, iconSize: 80),
               ),
-              child: _imagePath.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.file(
-                        File(_imagePath),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const MedicationImagePlaceholder(
-                              size: 200, iconSize: 80);
-                        },
-                      ),
-                    )
-                  : const MedicationImagePlaceholder(size: 200, iconSize: 80),
+            ),
+          )
+        else
+          SizedBox(
+            height: 200,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  itemCount: _imagePaths.length,
+                  itemBuilder: (context, index) {
+                    return _buildImagePreview(_imagePaths[index], index);
+                  },
+                ),
+                if (_imagePaths.length > 1)
+                  Positioned(
+                    left: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios),
+                      onPressed: () {
+                        _pageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.ease,
+                        );
+                      },
+                    ),
+                  ),
+                if (_imagePaths.length > 1)
+                  Positioned(
+                    right: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_forward_ios),
+                      onPressed: () {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.ease,
+                        );
+                      },
+                    ),
+                  ),
+              ],
             ),
           ),
-        ),
         const SizedBox(height: 8),
         Center(
           child: TextButton.icon(
-            onPressed: _pickImage,
-            icon: const Icon(Icons.camera_alt),
+            onPressed: _imagePaths.length < 5 ? () => _pickImage(null) : null, // Pass null for new image
+            icon: const Icon(Icons.add_a_photo),
             label: Text(
-              _imagePath.isEmpty ? 'Seleccionar Imagen' : 'Cambiar Imagen',
+              _imagePaths.isEmpty ? 'Añadir Foto' : 'Añadir Más Fotos (${_imagePaths.length}/5)',
             ),
             style: TextButton.styleFrom(
               foregroundColor: Colors.deepPurple.shade600,
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImagePreview(String imagePath, int index) {
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () => _pickImage(index), // Pass index for editing existing image
+          child: Container(
+            width: 200,
+            height: 200,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.grey.shade300,
+                width: 2,
+                style: BorderStyle.solid,
+              ),
+              color: Colors.grey.shade50,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(
+                File(imagePath),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const MedicationImagePlaceholder(size: 200, iconSize: 80);
+                },
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: IconButton(
+            icon: const Icon(Icons.delete_forever, color: Colors.red),
+            onPressed: () => _deleteImage(index),
           ),
         ),
       ],
@@ -451,7 +534,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     );
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(int? index) async {
     if (_isPickerActive) return;
 
     setState(() {
@@ -479,7 +562,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
                     imageQuality: 85,
                   );
                   if (image != null) {
-                    _cropImage(image.path);
+                    _cropImage(image.path, index);
                   }
                 },
               ),
@@ -495,7 +578,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
                     imageQuality: 85,
                   );
                   if (image != null) {
-                    _cropImage(image.path);
+                    _cropImage(image.path, index);
                   }
                 },
               ),
@@ -510,38 +593,22 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     });
   }
 
-  Future<void> _cropImage(String imagePath) async {
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: imagePath,
-      uiSettings: [
-        AndroidUiSettings(
-            toolbarTitle: 'Recortar Imagen',
-            toolbarColor: Colors.deepPurple.shade900,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: false,
-            aspectRatioPresets: [
-              CropAspectRatioPreset.square,
-              CropAspectRatioPreset.ratio3x2,
-              CropAspectRatioPreset.original,
-              CropAspectRatioPreset.ratio4x3,
-              CropAspectRatioPreset.ratio16x9
-            ]),
-        IOSUiSettings(
-          title: 'Recortar Imagen',
-          aspectRatioPresets: [
-            CropAspectRatioPreset.square,
-            CropAspectRatioPreset.ratio3x2,
-            CropAspectRatioPreset.original,
-            CropAspectRatioPreset.ratio4x3,
-            CropAspectRatioPreset.ratio16x9
-          ],
-        ),
-      ],
+  Future<void> _cropImage(String imagePath, int? index) async {
+    final CroppedFile? croppedFile = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CropperPage(path: imagePath),
+        fullscreenDialog: true,
+      ),
     );
+
     if (croppedFile != null) {
       setState(() {
-        _imagePath = croppedFile.path;
+        if (index != null) {
+          _imagePaths[index] = croppedFile.path;
+        } else {
+          _imagePaths.add(croppedFile.path);
+        }
       });
     }
   }
@@ -578,6 +645,20 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     });
   }
 
+  void _deleteImage(int index) {
+    setState(() {
+      _imagePaths.removeAt(index);
+      if (_imagePaths.isNotEmpty) {
+        if (_currentPage >= _imagePaths.length) {
+          _currentPage = _imagePaths.length - 1;
+          _pageController.jumpToPage(_currentPage);
+        }
+      } else {
+        _currentPage = 0;
+      }
+    });
+  }
+
   void _saveMedication() {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -608,7 +689,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
       final updatedMedication = widget.medication!.copyWith(
         name: _nameController.text.trim(),
         posology: _posologyController.text.trim(),
-        imagePath: _imagePath,
+        imagePaths: _imagePaths,
         schedules: _schedules,
         firstDoseDate: _firstDoseDate,
         repetitionType: _repetitionType,
@@ -625,7 +706,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         id: DateTime.now().toIso8601String(),
         name: _nameController.text.trim(),
         posology: _posologyController.text.trim(),
-        imagePath: _imagePath,
+        imagePaths: _imagePaths,
         schedules: _schedules,
         createdAt: DateTime.now(),
         firstDoseDate: _firstDoseDate ?? DateTime.now(),

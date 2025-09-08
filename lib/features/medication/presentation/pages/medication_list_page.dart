@@ -148,7 +148,7 @@ class _MedicationListPageState extends State<MedicationListPage> {
                   key: ValueKey(medication.id),
                   medication: medication,
                   onTap: () => _showMedicationDetails(context, medication),
-                  onImageTap: () => _showImageFullScreen(context, medication),
+                  onImageTap: (imagePaths, initialIndex) => _showImageFullScreen(context, medication, imagePaths, initialIndex),
                   onDelete: () => _confirmDelete(context, medication),
                   onEdit: () => _navigateToEdit(context, medication),
                 );
@@ -196,7 +196,7 @@ class _MedicationListPageState extends State<MedicationListPage> {
     );
   }
 
-  void _showImageFullScreen(BuildContext context, medication) {
+  void _showImageFullScreen(BuildContext context, medication, List<String> imagePaths, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -212,20 +212,36 @@ class _MedicationListPageState extends State<MedicationListPage> {
             backgroundColor: Colors.deepPurple.shade900,
             foregroundColor: Colors.white,
           ),
-          body: Center(
-            child: InteractiveViewer(
-              child: (medication.imagePath != null && medication.imagePath.isNotEmpty && File(medication.imagePath).existsSync())
-                  ? Image.file(
-                      File(medication.imagePath),
-                      fit: BoxFit.contain, // Keep contain for aspect ratio
-                    )
-                  : const Icon(
-                      Icons.image_not_supported, // Placeholder icon
-                      size: 100,
-                      color: Colors.grey,
-                    ),
-            ),
-          ),
+          body: imagePaths.isEmpty
+              ? const Center(
+                  child: Icon(
+                    Icons.image_not_supported,
+                    size: 100,
+                    color: Colors.grey,
+                  ),
+                )
+              : PageView.builder(
+                  controller: PageController(initialPage: initialIndex),
+                  itemCount: imagePaths.length,
+                  itemBuilder: (context, index) {
+                    final imagePath = imagePaths[index];
+                    return Center(
+                      child: InteractiveViewer(
+                        child: Image.file(
+                          File(imagePath),
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.image_not_supported,
+                              size: 100,
+                              color: Colors.grey,
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
         ),
       ),
     );

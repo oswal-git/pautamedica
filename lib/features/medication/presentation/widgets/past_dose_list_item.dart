@@ -10,7 +10,7 @@ class PastDoseListItem extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onUnmark; // New callback
   final bool isMostRecent; // New property
-  final VoidCallback? onImageTap; // New callback
+  final Function(List<String>)? onImageTap; // Changed callback signature
 
   const PastDoseListItem({
     super.key,
@@ -36,6 +36,12 @@ class PastDoseListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayImagePath = dose.medicationImagePaths.length > 1
+        ? dose.medicationImagePaths[1]
+        : dose.medicationImagePaths.isNotEmpty
+            ? dose.medicationImagePaths[0]
+            : '';
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 4,
@@ -48,15 +54,15 @@ class PastDoseListItem extends StatelessWidget {
           children: [
             GestureDetector(
               // Added GestureDetector
-              onTap: onImageTap, // Assign onImageTap
+              onTap: onImageTap != null ? () => onImageTap!(dose.medicationImagePaths) : null, // Pass all image paths
               child: SizedBox(
                 width: 64, // Reduced size
                 height: 64, // Reduced size
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: dose.medicationImagePath.isNotEmpty
+                  child: displayImagePath.isNotEmpty && File(displayImagePath).existsSync()
                       ? Image.file(
-                          File(dose.medicationImagePath),
+                          File(displayImagePath),
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return const MedicationImagePlaceholder(

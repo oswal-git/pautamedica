@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert'; // Added for jsonEncode/jsonDecode
 import 'package:collection/collection.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -67,7 +68,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         posology TEXT NOT NULL,
-        imagePath TEXT NOT NULL,
+        imagePaths TEXT NOT NULL, -- Changed to TEXT for JSON string
         schedules TEXT NOT NULL,
         createdAt TEXT NOT NULL,
         firstDoseDate TEXT,
@@ -87,7 +88,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
         time TEXT NOT NULL,
         status TEXT NOT NULL,
         notificationSentCount INTEGER NOT NULL DEFAULT 0,
-        markedAt TEXT // New column
+        markedAt TEXT
       )
     ''');
   }
@@ -127,10 +128,13 @@ class MedicationRepositoryImpl implements MedicationRepository {
     );
 
     if (result.isNotEmpty) {
-      final imagePath = result.first['imagePath'] as String;
-      final file = File(imagePath);
-      if (await file.exists()) {
-        await file.delete();
+      final imagePathsJson = result.first['imagePaths'] as String;
+      final imagePaths = (jsonDecode(imagePathsJson) as List).cast<String>();
+      for (final imagePath in imagePaths) {
+        final file = File(imagePath);
+        if (await file.exists()) {
+          await file.delete();
+        }
       }
     }
 
@@ -164,7 +168,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       'id': medication.id,
       'name': medication.name,
       'posology': medication.posology,
-      'imagePath': medication.imagePath,
+      'imagePaths': jsonEncode(medication.imagePaths), // Changed
       'schedules':
           medication.schedules.map((dt) => dt.toIso8601String()).join(','),
       'createdAt': medication.createdAt.toIso8601String(),
@@ -188,7 +192,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       id: map['id'] as String,
       name: map['name'] as String,
       posology: map['posology'] as String,
-      imagePath: map['imagePath'] as String,
+      imagePaths: (jsonDecode(map['imagePaths']) as List).cast<String>(), // Changed
       schedules: schedules,
       createdAt: DateTime.parse(map['createdAt'] as String),
       firstDoseDate: map['firstDoseDate'] != null
@@ -226,7 +230,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
         d.id,
         d.medicationId,
         m.name as medicationName,
-        m.imagePath as medicationImagePath,
+        m.imagePaths as medicationImagePaths,
         d.time,
         d.status,
         d.notificationSentCount
@@ -277,7 +281,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
         d.id,
         d.medicationId,
         m.name as medicationName,
-        m.imagePath as medicationImagePath,
+        m.imagePaths as medicationImagePaths, -- Changed
         d.time,
         d.status,
         d.notificationSentCount,
@@ -366,7 +370,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 id: '${medication.id}_${doseTime.toIso8601String()}',
                 medicationId: medication.id,
                 medicationName: medication.name,
-                medicationImagePath: medication.imagePath,
+                medicationImagePaths: medication.imagePaths,
                 time: doseTime,
                 status: DoseStatus.upcoming,
               );
@@ -407,7 +411,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
                   id: '${medication.id}_${doseTime.toIso8601String()}',
                   medicationId: medication.id,
                   medicationName: medication.name,
-                  medicationImagePath: medication.imagePath,
+                  medicationImagePaths: medication.imagePaths, // Changed
                   time: doseTime,
                   status: DoseStatus.upcoming,
                 );
@@ -459,7 +463,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       id: map['id'] as String,
       medicationId: map['medicationId'] as String,
       medicationName: map['medicationName'] as String,
-      medicationImagePath: map['medicationImagePath'] as String,
+      medicationImagePaths: (jsonDecode(map['medicationImagePaths']) as List).cast<String>(),
       time: DateTime.parse(map['time'] as String),
       status: DoseStatus.values.firstWhere(
         (e) =>

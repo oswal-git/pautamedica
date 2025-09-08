@@ -5,7 +5,7 @@ class Dose extends Equatable {
   final String id;
   final String medicationId;
   final String medicationName;
-  final String medicationImagePath;
+  final List<String> medicationImagePaths;
   final DateTime time;
   final DoseStatus status;
   final int notificationSentCount;
@@ -15,7 +15,7 @@ class Dose extends Equatable {
     required this.id,
     required this.medicationId,
     required this.medicationName,
-    required this.medicationImagePath,
+    required this.medicationImagePaths,
     required this.time,
     required this.status,
     this.notificationSentCount = 0,
@@ -26,7 +26,7 @@ class Dose extends Equatable {
     String? id,
     String? medicationId,
     String? medicationName,
-    String? medicationImagePath,
+    List<String>? medicationImagePaths,
     DateTime? time,
     DoseStatus? status,
     int? notificationSentCount,
@@ -36,7 +36,7 @@ class Dose extends Equatable {
       id: id ?? this.id,
       medicationId: medicationId ?? this.medicationId,
       medicationName: medicationName ?? this.medicationName,
-      medicationImagePath: medicationImagePath ?? this.medicationImagePath,
+      medicationImagePaths: medicationImagePaths ?? this.medicationImagePaths,
       time: time ?? this.time,
       status: status ?? this.status,
       notificationSentCount: notificationSentCount ?? this.notificationSentCount,
@@ -49,7 +49,7 @@ class Dose extends Equatable {
             id,
             medicationId,
             medicationName,
-            medicationImagePath,
+            medicationImagePaths,
             time,
             status,
             notificationSentCount,
