@@ -336,7 +336,6 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final batch = db.batch();
 
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
     final threeMonthsFromNow = now.add(const Duration(days: 90));
 
     for (final medication in medications) {

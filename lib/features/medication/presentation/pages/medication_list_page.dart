@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
@@ -6,6 +5,7 @@ import 'package:pautamedica/features/medication/presentation/bloc/medication_blo
 import 'package:pautamedica/features/medication/presentation/widgets/medication_list_item.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/add_medication_fab.dart';
 import 'package:pautamedica/features/medication/presentation/pages/add_edit_medication_page.dart';
+import 'package:pautamedica/features/medication/presentation/widgets/image_carousel_page.dart';
 
 class MedicationListPage extends StatefulWidget {
   const MedicationListPage({super.key});
@@ -148,7 +148,9 @@ class _MedicationListPageState extends State<MedicationListPage> {
                   key: ValueKey(medication.id),
                   medication: medication,
                   onTap: () => _showMedicationDetails(context, medication),
-                  onImageTap: (imagePaths, initialIndex) => _showImageFullScreen(context, medication, imagePaths, initialIndex),
+                  onImageTap: (imagePaths, initialIndex) =>
+                      _showImageFullScreen(
+                          context, medication, imagePaths, initialIndex),
                   onDelete: () => _confirmDelete(context, medication),
                   onEdit: () => _navigateToEdit(context, medication),
                 );
@@ -156,7 +158,8 @@ class _MedicationListPageState extends State<MedicationListPage> {
             );
           }
 
-          _logger.w('MedicationListPage: Estado desconocido: ${state.runtimeType}');
+          _logger.w(
+              'MedicationListPage: Estado desconocido: ${state.runtimeType}');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -196,52 +199,15 @@ class _MedicationListPageState extends State<MedicationListPage> {
     );
   }
 
-  void _showImageFullScreen(BuildContext context, medication, List<String> imagePaths, int initialIndex) {
+  void _showImageFullScreen(BuildContext context, medication,
+      List<String> imagePaths, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: Text(
-              medication.name,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            backgroundColor: Colors.deepPurple.shade900,
-            foregroundColor: Colors.white,
-          ),
-          body: imagePaths.isEmpty
-              ? const Center(
-                  child: Icon(
-                    Icons.image_not_supported,
-                    size: 100,
-                    color: Colors.grey,
-                  ),
-                )
-              : PageView.builder(
-                  controller: PageController(initialPage: initialIndex),
-                  itemCount: imagePaths.length,
-                  itemBuilder: (context, index) {
-                    final imagePath = imagePaths[index];
-                    return Center(
-                      child: InteractiveViewer(
-                        child: Image.file(
-                          File(imagePath),
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.image_not_supported,
-                              size: 100,
-                              color: Colors.grey,
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
+        builder: (context) => ImageCarouselPage(
+          imagePaths: imagePaths,
+          initialIndex: initialIndex,
+          medicationName: medication.name,
         ),
       ),
     );
