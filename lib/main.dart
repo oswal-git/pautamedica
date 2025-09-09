@@ -8,14 +8,7 @@ import 'package:workmanager/workmanager.dart';
 
 // Import MedicationBloc and its dependencies
 import 'package:pautamedica/features/medication/data/repositories/medication_repository_impl.dart';
-import 'package:pautamedica/features/medication/domain/usecases/add_medication.dart';
-import 'package:pautamedica/features/medication/domain/usecases/delete_medication.dart';
-import 'package:pautamedica/features/medication/domain/usecases/generate_doses.dart';
-import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
-import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.dart';
-import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
-import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
-import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/usecase_domain.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 
 final _logger = Logger();

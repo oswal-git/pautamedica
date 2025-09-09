@@ -12,6 +12,8 @@ class PastDoseListItem extends StatelessWidget {
   final bool isMostRecent; // New property
   final Function(List<String>, int)? onImageTap; // Changed callback signature
 
+    final String medicationDescription;
+
   const PastDoseListItem({
     super.key,
     required this.dose,
@@ -19,6 +21,7 @@ class PastDoseListItem extends StatelessWidget {
     this.onUnmark,
     this.isMostRecent = false,
     this.onImageTap,
+    this.medicationDescription = '',
   });
 
   Widget _getStatusIcon(DoseStatus status) {
@@ -92,6 +95,16 @@ class PastDoseListItem extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (medicationDescription.isNotEmpty)
+                    Text(
+                      medicationDescription,
+                      style: TextStyle(
+                        fontSize: 12, // Same font size as posology
+                        color: Colors.grey.shade600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   const SizedBox(height: 4),
                   Text(
                     DateFormat('dd/MM/yyyy HH:mm').format(dose.time),

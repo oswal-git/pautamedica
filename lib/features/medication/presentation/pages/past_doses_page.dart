@@ -46,8 +46,10 @@ class _PastDosesPageState extends State<PastDosesPage> {
                 final dose = state.doses[index];
                 final isMostRecent =
                     state.mostRecentDoseIds[dose.medicationId] == dose.id;
+                final medication = state.medicationsMap[dose.medicationId];
                 return PastDoseListItem(
                   dose: dose,
+                  medicationDescription: medication?.description ?? '', // Pass description
                   isMostRecent: isMostRecent,
                   onDelete: () {
                     context

@@ -28,6 +28,7 @@ class AddEditMedicationPage extends StatefulWidget {
 class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController(); // New
   final _posologyController = TextEditingController();
   final _repetitionIntervalController = TextEditingController(text: '1');
 
@@ -49,6 +50,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     super.initState();
     if (widget.isEditing && widget.medication != null) {
       _nameController.text = widget.medication!.name;
+      _descriptionController.text = widget.medication!.description; // New
       _posologyController.text = widget.medication!.posology;
       _imagePaths = List.from(widget.medication!.imagePaths);
       _schedules = List.from(widget.medication!.schedules);
@@ -75,6 +77,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose(); // New
     _posologyController.dispose();
     _repetitionIntervalController.dispose();
     _pageController.dispose(); // Dispose the PageController
@@ -115,6 +118,8 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
                 _buildImageSection(),
                 const SizedBox(height: 24),
                 _buildNameField(),
+                const SizedBox(height: 16),
+                _buildDescriptionField(), // New
                 const SizedBox(height: 16),
                 _buildPosologyField(),
                 const SizedBox(height: 24),
@@ -310,6 +315,19 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
           (BuildContext context, EditableTextState editableTextState) {
         return Container();
       },
+    );
+  }
+
+  Widget _buildDescriptionField() { // New
+    return TextFormField(
+      controller: _descriptionController,
+      decoration: const InputDecoration(
+        labelText: 'Descripción',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.description),
+        hintText: 'Ej: Pastilla para el dolor de cabeza',
+      ),
+      maxLines: 3,
     );
   }
 
@@ -716,6 +734,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     if (widget.isEditing && widget.medication != null) {
       final updatedMedication = widget.medication!.copyWith(
         name: _nameController.text.trim(),
+        description: _descriptionController.text.trim(), // Added description
         posology: _posologyController.text.trim(),
         imagePaths: _imagePaths,
         schedules: _schedules,
@@ -733,6 +752,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
       final newMedication = Medication(
         id: DateTime.now().toIso8601String(),
         name: _nameController.text.trim(),
+        description: _descriptionController.text.trim(), // Added description
         posology: _posologyController.text.trim(),
         imagePaths: _imagePaths,
         schedules: _schedules,

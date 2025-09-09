@@ -77,8 +77,10 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
               itemCount: state.doses.length,
               itemBuilder: (context, index) {
                 final dose = state.doses[index];
+                final medication = state.medicationsMap[dose.medicationId];
                 return DoseListItem(
                   dose: dose,
+                  medicationDescription: medication?.description ?? '', // Pass description
                   onStatusChanged: (status) {
                     context.read<MedicationBloc>().add(UpdateDoseStatusEvent(
                         dose, status,

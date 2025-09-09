@@ -98,21 +98,23 @@ class MedicationLoaded extends MedicationState {
 
 class UpcomingDosesLoaded extends MedicationState {
   final List<Dose> doses;
+  final Map<String, Medication> medicationsMap;
 
-  const UpcomingDosesLoaded(this.doses);
+  const UpcomingDosesLoaded(this.doses, this.medicationsMap);
 
   @override
-  List<Object?> get props => [doses];
+  List<Object?> get props => [doses, medicationsMap];
 }
 
 class PastDosesLoaded extends MedicationState {
   final List<Dose> doses;
   final Map<String, String> mostRecentDoseIds;
+  final Map<String, Medication> medicationsMap;
 
-  const PastDosesLoaded(this.doses, this.mostRecentDoseIds);
+  const PastDosesLoaded(this.doses, this.mostRecentDoseIds, this.medicationsMap);
 
   @override
-  List<Object?> get props => [doses, mostRecentDoseIds];
+  List<Object?> get props => [doses, mostRecentDoseIds, medicationsMap];
 }
 
 class MedicationError extends MedicationState {
@@ -213,7 +215,9 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     emit(MedicationLoading());
     try {
       final doses = await getUpcomingDoses();
-      emit(UpcomingDosesLoaded(doses));
+      final medications = await getMedications(); // Fetch all medications
+      final medicationsMap = {for (var med in medications) med.id: med}; // Create a map
+      emit(UpcomingDosesLoaded(doses, medicationsMap));
     } catch (e) {
       emit(MedicationError(e.toString()));
     }
@@ -226,7 +230,9 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     emit(MedicationLoading());
     try {
       final result = await getPastDoses();
-      emit(PastDosesLoaded(result.doses, result.mostRecentDoseIds));
+      final medications = await getMedications(); // Fetch all medications
+      final medicationsMap = {for (var med in medications) med.id: med}; // Create a map
+      emit(PastDosesLoaded(result.doses, result.mostRecentDoseIds, medicationsMap));
     } catch (e) {
       emit(MedicationError(e.toString()));
     }

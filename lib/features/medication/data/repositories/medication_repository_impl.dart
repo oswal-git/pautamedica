@@ -31,7 +31,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final path = join(documentsDirectory.path, 'medications.db');
       return await openDatabase(
         path,
-        version: 6, // Increment version
+        version: 7, // Increment version for description field
         onCreate: (db, version) async {
           await _createMedicationsTable(db);
           await _createDosesTable(db);
@@ -47,12 +47,18 @@ class MedicationRepositoryImpl implements MedicationRepository {
             await db.execute(
                 'ALTER TABLE $_dosesTableName ADD COLUMN notificationSentCount INTEGER NOT NULL DEFAULT 0');
           }
-          if (oldVersion < 6) { // New migration for markedAt
+          if (oldVersion < 6) {
+            // New migration for markedAt
             await db.execute(
                 'ALTER TABLE $_dosesTableName ADD COLUMN markedAt TEXT');
             // Migrate existing past doses to have markedAt = time
             await db.rawUpdate(
                 "UPDATE $_dosesTableName SET markedAt = time WHERE status IN ('taken', 'notTaken') AND markedAt IS NULL");
+          }
+          if (oldVersion < 7) {
+            // New migration for description
+            await db.execute(
+                'ALTER TABLE $_medicationsTableName ADD COLUMN description TEXT NOT NULL DEFAULT ""');
           }
         },
       );
@@ -67,6 +73,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       CREATE TABLE $_medicationsTableName(
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
         posology TEXT NOT NULL,
         imagePaths TEXT NOT NULL, -- Changed to TEXT for JSON string
         schedules TEXT NOT NULL,
@@ -119,7 +126,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   }
 
   @override
-    Future<void> deleteMedication(String id) async {
+  Future<void> deleteMedication(String id) async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(
       _medicationsTableName,
@@ -167,6 +174,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     return {
       'id': medication.id,
       'name': medication.name,
+      'description': medication.description,
       'posology': medication.posology,
       'imagePaths': jsonEncode(medication.imagePaths), // Changed
       'schedules':
@@ -191,8 +199,10 @@ class MedicationRepositoryImpl implements MedicationRepository {
     return Medication(
       id: map['id'] as String,
       name: map['name'] as String,
+      description: map['description'] as String,
       posology: map['posology'] as String,
-      imagePaths: (jsonDecode(map['imagePaths']) as List).cast<String>(), // Changed
+      imagePaths:
+          (jsonDecode(map['imagePaths']) as List).cast<String>(), // Changed
       schedules: schedules,
       createdAt: DateTime.parse(map['createdAt'] as String),
       firstDoseDate: map['firstDoseDate'] != null
@@ -458,7 +468,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
       id: map['id'] as String,
       medicationId: map['medicationId'] as String,
       medicationName: map['medicationName'] as String,
-      medicationImagePaths: (jsonDecode(map['medicationImagePaths']) as List).cast<String>(),
+      medicationImagePaths:
+          (jsonDecode(map['medicationImagePaths']) as List).cast<String>(),
       time: DateTime.parse(map['time'] as String),
       status: DoseStatus.values.firstWhere(
         (e) =>

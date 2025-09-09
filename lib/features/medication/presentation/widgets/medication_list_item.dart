@@ -85,6 +85,16 @@ class MedicationListItem extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (medication.description.isNotEmpty) // Only show if description is not empty
+                      Text(
+                        medication.description,
+                        style: TextStyle(
+                          fontSize: 12, // Same font size as posology
+                          color: Colors.grey.shade600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     const SizedBox(height: 4),
 
                     // Posología
