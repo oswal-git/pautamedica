@@ -4,6 +4,8 @@ import 'package:pautamedica/features/medication/domain/entities/dose.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/domain/entities/medication.dart';
 import 'package:pautamedica/features/medication/domain/usecases/add_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/export_medications.dart';
+import 'package:pautamedica/features/medication/domain/usecases/import_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_medication.dart';
 import 'package:pautamedica/features/medication/domain/usecases/generate_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
@@ -58,7 +60,8 @@ class UpdateDoseStatusEvent extends MedicationEvent {
   final DoseStatus status;
   final bool refreshPastDoses; // New parameter
 
-  const UpdateDoseStatusEvent(this.dose, this.status, {this.refreshPastDoses = false}); // Updated constructor
+  const UpdateDoseStatusEvent(this.dose, this.status,
+      {this.refreshPastDoses = false}); // Updated constructor
 
   @override
   List<Object?> get props => [dose, status, refreshPastDoses]; // Updated props
@@ -74,6 +77,10 @@ class DeleteDoseEvent extends MedicationEvent {
 }
 
 class GenerateDosesEvent extends MedicationEvent {}
+
+class ExportMedicationsEvent extends MedicationEvent {}
+
+class ImportMedicationsEvent extends MedicationEvent {}
 
 // States
 abstract class MedicationState extends Equatable {
@@ -111,7 +118,8 @@ class PastDosesLoaded extends MedicationState {
   final Map<String, String> mostRecentDoseIds;
   final Map<String, Medication> medicationsMap;
 
-  const PastDosesLoaded(this.doses, this.mostRecentDoseIds, this.medicationsMap);
+  const PastDosesLoaded(
+      this.doses, this.mostRecentDoseIds, this.medicationsMap);
 
   @override
   List<Object?> get props => [doses, mostRecentDoseIds, medicationsMap];
@@ -126,6 +134,17 @@ class MedicationError extends MedicationState {
   List<Object?> get props => [message];
 }
 
+class MedicationExportSuccess extends MedicationState {
+  final String message;
+  const MedicationExportSuccess(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
+class MedicationImportSuccess extends MedicationState {
+  const MedicationImportSuccess();
+}
+
 // BLoC
 class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   final GetMedications getMedications;
@@ -136,6 +155,8 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   final GetPastDoses getPastDoses;
   final UpdateDoseStatus updateDoseStatus;
   final GenerateDoses generateDoses;
+  final ExportMedications exportMedications;
+  final ImportMedications importMedications;
 
   MedicationBloc({
     required this.getMedications,
@@ -146,6 +167,8 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     required this.getPastDoses,
     required this.updateDoseStatus,
     required this.generateDoses,
+    required this.exportMedications,
+    required this.importMedications,
   }) : super(MedicationInitial()) {
     on<LoadMedications>(_onLoadMedications);
     on<AddMedicationEvent>(_onAddMedication);
@@ -155,6 +178,8 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     on<LoadPastDoses>(_onLoadPastDoses);
     on<UpdateDoseStatusEvent>(_onUpdateDoseStatus);
     on<GenerateDosesEvent>(_onGenerateDoses);
+    on<ExportMedicationsEvent>(_onExportMedications);
+    on<ImportMedicationsEvent>(_onImportMedications);
   }
 
   Future<void> _onLoadMedications(
@@ -216,7 +241,9 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     try {
       final doses = await getUpcomingDoses();
       final medications = await getMedications(); // Fetch all medications
-      final medicationsMap = {for (var med in medications) med.id: med}; // Create a map
+      final medicationsMap = {
+        for (var med in medications) med.id: med
+      }; // Create a map
       emit(UpcomingDosesLoaded(doses, medicationsMap));
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -231,8 +258,11 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     try {
       final result = await getPastDoses();
       final medications = await getMedications(); // Fetch all medications
-      final medicationsMap = {for (var med in medications) med.id: med}; // Create a map
-      emit(PastDosesLoaded(result.doses, result.mostRecentDoseIds, medicationsMap));
+      final medicationsMap = {
+        for (var med in medications) med.id: med
+      }; // Create a map
+      emit(PastDosesLoaded(
+          result.doses, result.mostRecentDoseIds, medicationsMap));
     } catch (e) {
       emit(MedicationError(e.toString()));
     }
@@ -263,6 +293,35 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
       await generateDoses();
     } catch (e) {
       emit(MedicationError(e.toString()));
+    }
+  }
+
+  Future<void> _onExportMedications(
+    ExportMedicationsEvent event,
+    Emitter<MedicationState> emit,
+  ) async {
+    try {
+      final filePath = await exportMedications();
+      if (filePath != null) {
+        emit(MedicationExportSuccess('Datos exportados a:\n$filePath'));
+      } else {
+        emit(const MedicationError('Exportación cancelada por el usuario.'));
+      }
+    } catch (e) {
+      emit(MedicationError('Error al exportar: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onImportMedications(
+    ImportMedicationsEvent event,
+    Emitter<MedicationState> emit,
+  ) async {
+    try {
+      await importMedications();
+      emit(const MedicationImportSuccess());
+      add(LoadMedications()); // Recargar los medicamentos para mostrar los datos importados.
+    } catch (e) {
+      emit(MedicationError('Error al importar: ${e.toString()}'));
     }
   }
 }

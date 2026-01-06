@@ -4,7 +4,10 @@ import 'package:logger/logger.dart';
 import 'package:pautamedica/app/app.dart';
 import 'package:pautamedica/app/bloc_observer.dart';
 import 'package:pautamedica/background_service.dart';
+import 'package:pautamedica/features/medication/domain/usecases/export_medications.dart';
+import 'package:pautamedica/features/medication/domain/usecases/import_medications.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:pautamedica/features/medication/data/notification_service.dart';
 
 // Import MedicationBloc and its dependencies
 import 'package:pautamedica/features/medication/data/repositories/medication_repository_impl.dart';
@@ -17,7 +20,10 @@ final _logger = Logger();
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     _logger.i("Background task started: $task");
-    final backgroundService = BackgroundService();
+    final backgroundService = BackgroundService(
+      medicationRepository: MedicationRepositoryImpl(),
+      notificationService: NotificationService(),
+    );
     await backgroundService.executeTask();
     _logger.i("Background task finished: $task");
     return Future.value(true);
@@ -53,6 +59,8 @@ void main() {
           getPastDoses: GetPastDoses(medicationRepository),
           updateDoseStatus: UpdateDoseStatus(medicationRepository),
           generateDoses: GenerateDoses(medicationRepository),
+          exportMedications: ExportMedications(medicationRepository),
+          importMedications: ImportMedications(medicationRepository),
         )..add(GenerateDosesEvent());
       },
       child: const App(),

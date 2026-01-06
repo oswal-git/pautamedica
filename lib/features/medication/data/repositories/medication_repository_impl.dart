@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert'; // Added for jsonEncode/jsonDecode
 import 'package:collection/collection.dart';
+import 'package:pautamedica/features/medication/data/file_service.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
@@ -18,6 +19,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   static Database? _database;
   static const String _medicationsTableName = 'medications';
   static const String _dosesTableName = 'doses';
+  final _fileService = FileService();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -482,5 +484,44 @@ class MedicationRepositoryImpl implements MedicationRepository {
           ? DateTime.parse(map['markedAt'] as String)
           : null, // New field
     );
+  }
+
+  @override
+  Future<String?> exportMedications() async {
+    final db = await database;
+    final medicationsMaps = await db.query(_medicationsTableName);
+    final dosesMaps = await db.query(_dosesTableName);
+
+    final dataToExport = {
+      'medications': medicationsMaps,
+      'doses': dosesMaps,
+    };
+
+    final jsonString = jsonEncode(dataToExport);
+    return await _fileService.saveJsonToFile(jsonString);
+  }
+
+  @override
+  Future<void> importMedications() async {
+    final path = await _fileService.pickJsonFile();
+    if (path != null) {
+      final file = File(path);
+      final content = await file.readAsString();
+      final Map<String, dynamic> jsonData = jsonDecode(content);
+
+      final List<dynamic> medications = jsonData['medications'] ?? [];
+      final List<dynamic> doses = jsonData['doses'] ?? [];
+
+      final db = await database;
+      await db.delete(_medicationsTableName);
+      await db.delete(_dosesTableName);
+      for (final medication in medications) {
+        await db.insert(
+            _medicationsTableName, medication as Map<String, dynamic>);
+      }
+      for (final dose in doses) {
+        await db.insert(_dosesTableName, dose as Map<String, dynamic>);
+      }
+    }
   }
 }

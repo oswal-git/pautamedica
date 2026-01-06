@@ -163,7 +163,8 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
                   ),
                   color: Colors.grey.shade50,
                 ),
-                child: const MedicationImagePlaceholder(size: 200, iconSize: 80),
+                child:
+                    const MedicationImagePlaceholder(size: 200, iconSize: 80),
               ),
             ),
           )
@@ -194,7 +195,8 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
                         },
                       ),
                     ),
-                  if (_imagePaths.length > 1 && _currentPage < _imagePaths.length - 1)
+                  if (_imagePaths.length > 1 &&
+                      _currentPage < _imagePaths.length - 1)
                     Positioned(
                       right: 0,
                       child: IconButton(
@@ -214,10 +216,14 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         const SizedBox(height: 8),
         Center(
           child: TextButton.icon(
-            onPressed: _imagePaths.length < 5 ? () => _pickImage(null) : null, // Pass null for new image
+            onPressed: _imagePaths.length < 5
+                ? () => _pickImage(null)
+                : null, // Pass null for new image
             icon: const Icon(Icons.add_a_photo),
             label: Text(
-              _imagePaths.isEmpty ? 'Añadir Foto' : 'Añadir Más Fotos (${_imagePaths.length}/5)',
+              _imagePaths.isEmpty
+                  ? 'Añadir Foto'
+                  : 'Añadir Más Fotos (${_imagePaths.length}/5)',
             ),
             style: TextButton.styleFrom(
               foregroundColor: Colors.deepPurple.shade600,
@@ -318,7 +324,8 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     );
   }
 
-  Widget _buildDescriptionField() { // New
+  Widget _buildDescriptionField() {
+    // New
     return TextFormField(
       controller: _descriptionController,
       decoration: const InputDecoration(
