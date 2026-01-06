@@ -5,6 +5,7 @@ import 'repetition_type.dart';
 class Medication extends Equatable {
   final String id;
   final String name;
+  final String description;
   final String posology;
   final List<String> imagePaths;
   final List<DateTime> schedules;
@@ -20,6 +21,7 @@ class Medication extends Equatable {
   const Medication({
     required this.id,
     required this.name,
+    this.description = '',
     required this.posology,
     required this.imagePaths,
     required this.schedules,
@@ -34,6 +36,7 @@ class Medication extends Equatable {
     Medication copyWith({
     String? id,
     String? name,
+    String? description,
     String? posology,
     List<String>? imagePaths,
     List<DateTime>? schedules,
@@ -47,6 +50,7 @@ class Medication extends Equatable {
     return Medication(
       id: id ?? this.id,
       name: name ?? this.name,
+      description: description ?? this.description,
       posology: posology ?? this.posology,
       imagePaths: imagePaths ?? this.imagePaths,
       schedules: schedules ?? this.schedules,
@@ -63,6 +67,7 @@ class Medication extends Equatable {
   List<Object?> get props => [
         id,
         name,
+        description,
         posology,
         imagePaths,
         schedules,

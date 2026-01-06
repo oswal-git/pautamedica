@@ -13,4 +13,7 @@ abstract class MedicationRepository {
   Future<void> updateDose(Dose dose);
   Future<void> deleteDose(String id);
   Future<void> generateDoses();
+
+  Future<String?> exportMedications();
+  Future<void> importMedications();
 }

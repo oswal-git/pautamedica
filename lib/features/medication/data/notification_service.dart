@@ -36,7 +36,8 @@ class NotificationService {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('app_icon');
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
     );
 
@@ -56,13 +57,16 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    _logger.i("NotificationService: Attempting to show notification for ${dose.medicationName}");
-    final AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+    _logger.i(
+        "NotificationService: Attempting to show notification for ${dose.medicationName}");
+    final AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
       'medication_channel', // Use the static channel ID
       'Medication Reminders', // Use the static channel name
       channelDescription: 'Notifications for medication reminders',
       importance: Importance.max,
       priority: Priority.high,
+      visibility: NotificationVisibility.public,
       ticker: 'ticker',
       playSound: true,
       enableVibration: true,
@@ -77,7 +81,8 @@ class NotificationService {
       platformChannelSpecifics,
       payload: dose.id,
     );
-    _logger.i("NotificationService: Notification shown for ${dose.medicationName}");
+    _logger.i(
+        "NotificationService: Notification shown for ${dose.medicationName}");
   }
 
   Future<void> cancelNotification(String doseId) async {

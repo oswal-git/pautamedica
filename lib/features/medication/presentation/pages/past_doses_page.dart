@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/past_dose_list_item.dart';
-import 'package:pautamedica/features/medication/presentation/widgets/medication_image_placeholder.dart';
+import 'package:pautamedica/features/medication/presentation/widgets/image_carousel_page.dart';
 
 class PastDosesPage extends StatefulWidget {
   const PastDosesPage({super.key});
@@ -47,8 +46,10 @@ class _PastDosesPageState extends State<PastDosesPage> {
                 final dose = state.doses[index];
                 final isMostRecent =
                     state.mostRecentDoseIds[dose.medicationId] == dose.id;
+                final medication = state.medicationsMap[dose.medicationId];
                 return PastDoseListItem(
                   dose: dose,
+                  medicationDescription: medication?.description ?? '', // Pass description
                   isMostRecent: isMostRecent,
                   onDelete: () {
                     context
@@ -60,7 +61,8 @@ class _PastDosesPageState extends State<PastDosesPage> {
                           context.read<MedicationBloc>().add(
                                 UpdateDoseStatusEvent(
                                   dose,
-                                  DoseStatus.upcoming, // Or DoseStatus.expired based on time
+                                  DoseStatus
+                                      .upcoming, // Or DoseStatus.expired based on time
                                   refreshPastDoses: true, // Set to true
                                 ),
                               );
@@ -87,57 +89,10 @@ class _PastDosesPageState extends State<PastDosesPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: Text(
-              medicationName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            backgroundColor: Colors.deepPurple.shade900,
-            foregroundColor: Colors.white,
-          ),
-          body: imagePaths.isEmpty
-              ? const Center(
-                  child: Icon(
-                    Icons.image_not_supported,
-                    size: 100,
-                    color: Colors.grey,
-                  ),
-                )
-              : imagePaths.length == 1
-                  ? Center(
-                      child: InteractiveViewer(
-                        child: Image.file(
-                          File(imagePaths[0]),
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const MedicationImagePlaceholder(
-                                size: 200, iconSize: 80);
-                          },
-                        ),
-                      ),
-                    )
-                  : PageView.builder(
-                      controller: PageController(initialPage: initialIndex),
-                      itemCount: imagePaths.length,
-                      itemBuilder: (context, index) {
-                        return Center(
-                          child: InteractiveViewer(
-                            child: Image.file(
-                              File(imagePaths[index]),
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const MedicationImagePlaceholder(
-                                    size: 200, iconSize: 80);
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+        builder: (context) => ImageCarouselPage(
+          imagePaths: imagePaths,
+          initialIndex: initialIndex,
+          medicationName: medicationName,
         ),
       ),
     );

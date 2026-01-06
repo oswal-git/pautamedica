@@ -10,11 +10,14 @@ class DoseListItem extends StatelessWidget {
   final Function(DoseStatus) onStatusChanged;
   final Function(List<String>, int)? onImageTap;
 
+  final String medicationDescription;
+
   const DoseListItem({
     super.key,
     required this.dose,
     required this.onStatusChanged,
     this.onImageTap,
+    required this.medicationDescription,
   });
 
   Color _getCardColor(Dose dose) {
@@ -89,6 +92,16 @@ class DoseListItem extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (medicationDescription.isNotEmpty)
+                    Text(
+                      medicationDescription,
+                      style: TextStyle(
+                        fontSize: 12, // Same font size as posology
+                        color: Colors.grey.shade600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   const SizedBox(height: 4),
                   Text(
                     DateFormat('dd/MM/yyyy HH:mm').format(dose.time),

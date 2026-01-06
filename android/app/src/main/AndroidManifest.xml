@@ -3,6 +3,9 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
         <application
         android:enableOnBackInvokedCallback="true"
         android:label="pautamedica"
@@ -35,19 +38,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
-            android:exported="true"
-            tools:replace="android:exported"> <!-- Add this line -->
-        </receiver>
-        <service
-            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
-            android:exported="false"
-            tools:replace="android:exported" />
-        <service
-            android:name="androidx.work.impl.background.systemjob.SystemJobService"
-            android:exported="false"
-            tools:replace="android:exported" />
-            <activity
+        <!-- Configuración para WorkManager -->
+        <provider
+            android:name="androidx.work.impl.WorkManagerInitializer"
+            android:authorities="${applicationId}.workmanager-init"
+            tools:node="remove" />
+        <activity
                 android:name="com.yalantis.ucrop.UCropActivity"
                 android:screenOrientation="portrait"
                 android:theme="@style/AppTheme.FullScreen.Crop"/>
