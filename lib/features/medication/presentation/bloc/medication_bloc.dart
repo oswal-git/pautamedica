@@ -7,8 +7,10 @@ import 'package:pautamedica/features/medication/domain/usecases/generate_doses.d
 import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
+import 'package:pautamedica/features/medication/domain/usecases/regenerate_doses_for_medication.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/delete_dose.dart';
 
 import 'medication_event.dart';
 import 'medication_state.dart';
@@ -23,8 +25,10 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   final GetPastDoses getPastDoses;
   final UpdateDoseStatus updateDoseStatus;
   final GenerateDoses generateDoses;
+  final RegenerateDosesForMedication regenerateDosesForMedication;
   final ExportMedications exportMedications;
   final ImportMedications importMedications;
+  final DeleteDose deleteDose;
 
   MedicationBloc({
     required this.getMedications,
@@ -35,8 +39,10 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     required this.getPastDoses,
     required this.updateDoseStatus,
     required this.generateDoses,
+    required this.regenerateDosesForMedication,
     required this.exportMedications,
     required this.importMedications,
+    required this.deleteDose,
   }) : super(MedicationInitial()) {
     on<LoadMedications>(_onLoadMedications);
     on<AddMedicationEvent>(_onAddMedication);
@@ -48,6 +54,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     on<GenerateDosesEvent>(_onGenerateDoses);
     on<ExportMedicationsEvent>(_onExportMedications);
     on<ImportMedicationsEvent>(_onImportMedications);
+    on<DeleteDoseEvent>(_onDeleteDose);
   }
 
   Future<void> _onLoadMedications(
@@ -82,7 +89,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   ) async {
     try {
       await updateMedication(event.medication);
-      add(GenerateDosesEvent());
+      await regenerateDosesForMedication(event.medication.id);
       add(LoadMedications());
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -190,6 +197,18 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
       add(LoadMedications()); // Recargar los medicamentos para mostrar los datos importados.
     } catch (e) {
       emit(MedicationError('Error al importar: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onDeleteDose(
+    DeleteDoseEvent event,
+    Emitter<MedicationState> emit,
+  ) async {
+    try {
+      await deleteDose(event.id);
+      add(LoadPastDoses()); // Refresh past doses list
+    } catch (e) {
+      emit(MedicationError(e.toString()));
     }
   }
 }

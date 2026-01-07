@@ -23,6 +23,7 @@ class DoseListItem extends StatelessWidget {
   Color _getCardColor(Dose dose) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
     final doseDate = DateTime(dose.time.year, dose.time.month, dose.time.day);
 
     if (dose.status == DoseStatus.expired) {
@@ -33,7 +34,11 @@ class DoseListItem extends StatelessWidget {
       return Colors.orange.shade100; // Reddish for today
     }
 
-    return Colors.white; // Default color for other days
+    if (doseDate == tomorrow) {
+      return Colors.white; // White for tomorrow
+    }
+
+    return Colors.grey.shade100; // Light gray for other days
   }
 
   @override
@@ -55,7 +60,8 @@ class DoseListItem extends StatelessWidget {
         padding: const EdgeInsets.all(12), // Reduced padding
         child: Row(
           children: [
-            GestureDetector( // Added GestureDetector
+            GestureDetector(
+              // Added GestureDetector
               onTap: onImageTap != null
                   ? () {
                       final initialIndex =
@@ -68,15 +74,18 @@ class DoseListItem extends StatelessWidget {
                 height: 64, // Reduced size
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: displayImagePath.isNotEmpty && File(displayImagePath).existsSync()
+                  child: displayImagePath.isNotEmpty &&
+                          File(displayImagePath).existsSync()
                       ? Image.file(
                           File(displayImagePath),
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return const MedicationImagePlaceholder(size: 64, iconSize: 32); // Reduced icon size
+                            return const MedicationImagePlaceholder(
+                                size: 64, iconSize: 32); // Reduced icon size
                           },
                         )
-                      : const MedicationImagePlaceholder(size: 64, iconSize: 32), // Reduced icon size
+                      : const MedicationImagePlaceholder(
+                          size: 64, iconSize: 32), // Reduced icon size
                 ),
               ),
             ),
@@ -114,12 +123,14 @@ class DoseListItem extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.check_circle, color: Colors.green, size: 28), // Reduced icon size
+              icon: const Icon(Icons.check_circle,
+                  color: Colors.green, size: 28), // Reduced icon size
               onPressed: () => onStatusChanged(DoseStatus.taken),
             ),
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(Icons.cancel, color: Colors.red, size: 28), // Reduced icon size
+              icon: const Icon(Icons.cancel,
+                  color: Colors.red, size: 28), // Reduced icon size
               onPressed: () => onStatusChanged(DoseStatus.notTaken),
             ),
           ],

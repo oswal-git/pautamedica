@@ -4,16 +4,11 @@ import 'package:logger/logger.dart';
 import 'package:pautamedica/app/app.dart';
 import 'package:pautamedica/app/bloc_observer.dart';
 import 'package:pautamedica/background_service.dart';
-import 'package:pautamedica/features/medication/domain/usecases/export_medications.dart';
-import 'package:pautamedica/features/medication/domain/usecases/import_medications.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
+import 'package:pautamedica/core/di/injection_container.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:pautamedica/features/medication/data/notification_service.dart';
-
-// Import MedicationBloc and its dependencies
-import 'package:pautamedica/features/medication/data/repositories/medication_repository_impl.dart';
-import 'package:pautamedica/features/medication/domain/usecases/usecase_domain.dart';
-import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 
 final _logger = Logger();
 
@@ -21,8 +16,10 @@ final _logger = Logger();
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     _logger.i("Background task started: $task");
+    // Initialize dependency injection for background tasks
+    await init();
     final backgroundService = BackgroundService(
-      medicationRepository: MedicationRepositoryImpl(),
+      medicationRepository: sl(),
       notificationService: NotificationService(),
     );
     await backgroundService.executeTask();
@@ -31,8 +28,12 @@ void callbackDispatcher() {
   });
 }
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize dependency injection
+  await init();
+
   Workmanager().initialize(
     callbackDispatcher,
   );
@@ -49,21 +50,7 @@ void main() {
   Bloc.observer = AppBlocObserver();
   runApp(
     BlocProvider(
-      create: (context) {
-        final medicationRepository = MedicationRepositoryImpl();
-        return MedicationBloc(
-          getMedications: GetMedications(medicationRepository),
-          addMedication: AddMedication(medicationRepository),
-          updateMedication: UpdateMedication(medicationRepository),
-          deleteMedication: DeleteMedication(medicationRepository),
-          getUpcomingDoses: GetUpcomingDoses(medicationRepository),
-          getPastDoses: GetPastDoses(medicationRepository),
-          updateDoseStatus: UpdateDoseStatus(medicationRepository),
-          generateDoses: GenerateDoses(medicationRepository),
-          exportMedications: ExportMedications(medicationRepository),
-          importMedications: ImportMedications(medicationRepository),
-        )..add(GenerateDosesEvent());
-      },
+      create: (context) => sl<MedicationBloc>()..add(GenerateDosesEvent()),
       child: const App(),
     ),
   );

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert'; // Added for jsonEncode/jsonDecode
 import 'package:collection/collection.dart';
 import 'package:pautamedica/features/medication/data/file_service.dart';
+import 'package:pautamedica/features/medication/data/notification_service.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose.dart';
@@ -339,6 +340,134 @@ class MedicationRepositoryImpl implements MedicationRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  @override
+  Future<void> regenerateDosesForMedication(String medicationId) async {
+    final db = await database;
+    final notificationService = NotificationService();
+    await notificationService.init();
+
+    // Get all upcoming doses for this medication
+    final List<Map<String, dynamic>> upcomingDoses = await db.query(
+      _dosesTableName,
+      where: 'medicationId = ? AND status = ?',
+      whereArgs: [medicationId, 'upcoming'],
+    );
+
+    // Cancel notifications for these doses
+    for (final doseMap in upcomingDoses) {
+      final doseId = doseMap['id'] as String;
+      await notificationService.cancelNotification(doseId);
+    }
+
+    // Delete all upcoming doses for this medication
+    await db.delete(
+      _dosesTableName,
+      where: 'medicationId = ? AND status = ?',
+      whereArgs: [medicationId, 'upcoming'],
+    );
+
+    // Regenerate doses for this medication
+    final medications = await getAllMedications();
+    final medication = medications.firstWhere((m) => m.id == medicationId);
+    final batch = db.batch();
+
+    final now = DateTime.now();
+    final threeMonthsFromNow = now.add(const Duration(days: 90));
+
+    final startDate = medication.firstDoseDate != null &&
+            medication.firstDoseDate!.isAfter(medication.createdAt)
+        ? medication.firstDoseDate!
+        : medication.createdAt;
+
+    if (medication.firstDoseDate != null &&
+        medication.firstDoseDate!.isAfter(now)) {
+      return;
+    }
+
+    if (medication.repetitionType == RepetitionType.none) {
+      for (final schedule in medication.schedules) {
+        final doseTime = DateTime(
+          startDate.year,
+          startDate.month,
+          startDate.day,
+          schedule.hour,
+          schedule.minute,
+        );
+        if (doseTime.isAfter(now.subtract(const Duration(days: 1)))) {
+          final existingDoses = await db.query(
+            _dosesTableName,
+            where: 'medicationId = ? AND time = ?',
+            whereArgs: [medication.id, doseTime.toIso8601String()],
+          );
+          if (existingDoses.isEmpty) {
+            final dose = Dose(
+              id: '${medication.id}_${doseTime.toIso8601String()}',
+              medicationId: medication.id,
+              medicationName: medication.name,
+              medicationImagePaths: medication.imagePaths,
+              time: doseTime,
+              status: DoseStatus.upcoming,
+            );
+            batch.insert(_dosesTableName, _doseToMap(dose));
+          }
+        }
+      }
+    } else {
+      var currentDate = startDate;
+
+      while (currentDate.isBefore(threeMonthsFromNow)) {
+        if (medication.endDate != null &&
+            currentDate.isAfter(medication.endDate!)) {
+          break;
+        }
+
+        for (final schedule in medication.schedules) {
+          final doseTime = DateTime(
+            currentDate.year,
+            currentDate.month,
+            currentDate.day,
+            schedule.hour,
+            schedule.minute,
+          );
+
+          if (doseTime.isAfter(now.subtract(const Duration(days: 1)))) {
+            final existingDoses = await db.query(
+              _dosesTableName,
+              where: 'medicationId = ? AND time = ?',
+              whereArgs: [medication.id, doseTime.toIso8601String()],
+            );
+            if (existingDoses.isEmpty) {
+              final dose = Dose(
+                id: '${medication.id}_${doseTime.toIso8601String()}',
+                medicationId: medication.id,
+                medicationName: medication.name,
+                medicationImagePaths: medication.imagePaths,
+                time: doseTime,
+                status: DoseStatus.upcoming,
+              );
+              batch.insert(_dosesTableName, _doseToMap(dose));
+            }
+          }
+        }
+
+        if (medication.repetitionType == RepetitionType.daily) {
+          currentDate = currentDate
+              .add(Duration(days: medication.repetitionInterval ?? 1));
+        } else if (medication.repetitionType == RepetitionType.weekly) {
+          currentDate = currentDate
+              .add(Duration(days: (medication.repetitionInterval ?? 1) * 7));
+        } else if (medication.repetitionType == RepetitionType.monthly) {
+          currentDate = DateTime(
+              currentDate.year,
+              currentDate.month + (medication.repetitionInterval ?? 1),
+              currentDate.day);
+        }
+      }
+    }
+
+    await batch.commit(noResult: true);
   }
 
   @override
