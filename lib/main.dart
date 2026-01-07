@@ -6,6 +6,7 @@ import 'package:pautamedica/app/bloc_observer.dart';
 import 'package:pautamedica/background_service.dart';
 import 'package:pautamedica/features/medication/domain/usecases/export_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/import_medications.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:pautamedica/features/medication/data/notification_service.dart';
 

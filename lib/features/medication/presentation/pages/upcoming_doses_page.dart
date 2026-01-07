@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_state.dart';
 import 'package:pautamedica/features/medication/presentation/pages/medication_list_page.dart';
 import 'package:pautamedica/features/medication/presentation/pages/past_doses_page.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/dose_list_item.dart';
@@ -80,7 +82,8 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                 final medication = state.medicationsMap[dose.medicationId];
                 return DoseListItem(
                   dose: dose,
-                  medicationDescription: medication?.description ?? '', // Pass description
+                  medicationDescription:
+                      medication?.description ?? '', // Pass description
                   onStatusChanged: (status) {
                     context.read<MedicationBloc>().add(UpdateDoseStatusEvent(
                         dose, status,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_state.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/past_dose_list_item.dart';
 import 'package:pautamedica/features/medication/presentation/widgets/image_carousel_page.dart';
 
@@ -49,7 +51,8 @@ class _PastDosesPageState extends State<PastDosesPage> {
                 final medication = state.medicationsMap[dose.medicationId];
                 return PastDoseListItem(
                   dose: dose,
-                  medicationDescription: medication?.description ?? '', // Pass description
+                  medicationDescription:
+                      medication?.description ?? '', // Pass description
                   isMostRecent: isMostRecent,
                   onDelete: () {
                     context

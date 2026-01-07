@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:pautamedica/features/medication/domain/entities/medication.dart';
 import 'package:pautamedica/features/medication/domain/entities/repetition_type.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
 
 import 'package:pautamedica/features/medication/presentation/widgets/medication_image_placeholder.dart';
 import 'package:pautamedica/features/medication/presentation/pages/cropper_page.dart';

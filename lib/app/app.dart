@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/data/notification_service.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
+import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
 import 'package:pautamedica/features/medication/presentation/pages/upcoming_doses_page.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
