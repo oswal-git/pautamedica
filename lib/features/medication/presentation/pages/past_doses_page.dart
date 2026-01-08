@@ -26,6 +26,12 @@ class _PastDosesPageState extends State<PastDosesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tomas Pasadas'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.cleaning_services),
+            onPressed: _showCleanupDialog,
+          ),
+        ],
       ),
       body: BlocBuilder<MedicationBloc, MedicationState>(
         buildWhen: (previous, current) {
@@ -99,5 +105,79 @@ class _PastDosesPageState extends State<PastDosesPage> {
         ),
       ),
     );
+  }
+
+  void _showCleanupDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Limpiar Tomas Pasadas'),
+          content: const Text(
+              'Selecciona cuánto tiempo mantener las tomas pasadas:'),
+          actions: [
+            TextButton(
+              onPressed: () => _confirmCleanup(15),
+              child: const Text('Mantener últimos 15 días'),
+            ),
+            TextButton(
+              onPressed: () => _confirmCleanup(30),
+              child: const Text('Mantener últimos 30 días'),
+            ),
+            TextButton(
+              onPressed: () => _confirmCleanup(90),
+              child: const Text('Mantener últimos 3 meses'),
+            ),
+            TextButton(
+              onPressed: () => _confirmCleanup(0),
+              child: const Text('Eliminar todas'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmCleanup(int days) {
+    Navigator.of(context).pop(); // Close the dialog
+    String message;
+    if (days == 0) {
+      message =
+          '¿Estás seguro de que quieres eliminar todas las tomas pasadas?';
+    } else {
+      message =
+          '¿Estás seguro de que quieres eliminar las tomas pasadas anteriores a $days días?';
+    }
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => _performCleanup(days),
+              child: const Text('Confirmar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _performCleanup(int days) {
+    Navigator.of(context).pop(); // Close the confirmation dialog
+    final cutoff = days == 0
+        ? DateTime.now()
+        : DateTime.now().subtract(Duration(days: days));
+    context.read<MedicationBloc>().add(CleanPastDosesEvent(cutoff));
   }
 }

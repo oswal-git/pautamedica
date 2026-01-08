@@ -4,6 +4,7 @@ import 'package:pautamedica/features/medication/domain/repositories/medication_r
 import 'package:pautamedica/features/medication/domain/usecases/add_medication.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_dose.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/delete_past_doses_older_than.dart';
 import 'package:pautamedica/features/medication/domain/usecases/export_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/generate_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_medications.dart';
@@ -38,6 +39,7 @@ Future<void> init() async {
       exportMedications: sl(),
       importMedications: sl(),
       deleteDose: sl(),
+      deletePastDosesOlderThan: sl(),
     ),
   );
 
@@ -54,4 +56,5 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ExportMedications(sl()));
   sl.registerLazySingleton(() => ImportMedications(sl()));
   sl.registerLazySingleton(() => DeleteDose(sl()));
+  sl.registerLazySingleton(() => DeletePastDosesOlderThan(sl()));
 }

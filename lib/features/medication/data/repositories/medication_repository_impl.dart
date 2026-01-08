@@ -653,4 +653,14 @@ class MedicationRepositoryImpl implements MedicationRepository {
       }
     }
   }
+
+  @override
+  Future<void> deletePastDosesOlderThan(DateTime cutoff) async {
+    final db = await database;
+    await db.delete(
+      _dosesTableName,
+      where: 'markedAt < ? AND (status = ? OR status = ?)',
+      whereArgs: [cutoff.toIso8601String(), 'taken', 'notTaken'],
+    );
+  }
 }

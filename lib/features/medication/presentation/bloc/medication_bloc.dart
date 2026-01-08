@@ -11,6 +11,7 @@ import 'package:pautamedica/features/medication/domain/usecases/regenerate_doses
 import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_dose.dart';
+import 'package:pautamedica/features/medication/domain/usecases/delete_past_doses_older_than.dart';
 
 import 'medication_event.dart';
 import 'medication_state.dart';
@@ -29,6 +30,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   final ExportMedications exportMedications;
   final ImportMedications importMedications;
   final DeleteDose deleteDose;
+  final DeletePastDosesOlderThan deletePastDosesOlderThan;
 
   MedicationBloc({
     required this.getMedications,
@@ -43,6 +45,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     required this.exportMedications,
     required this.importMedications,
     required this.deleteDose,
+    required this.deletePastDosesOlderThan,
   }) : super(MedicationInitial()) {
     on<LoadMedications>(_onLoadMedications);
     on<AddMedicationEvent>(_onAddMedication);
@@ -55,6 +58,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     on<ExportMedicationsEvent>(_onExportMedications);
     on<ImportMedicationsEvent>(_onImportMedications);
     on<DeleteDoseEvent>(_onDeleteDose);
+    on<CleanPastDosesEvent>(_onCleanPastDoses);
   }
 
   Future<void> _onLoadMedications(
@@ -206,6 +210,18 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   ) async {
     try {
       await deleteDose(event.id);
+      add(LoadPastDoses()); // Refresh past doses list
+    } catch (e) {
+      emit(MedicationError(e.toString()));
+    }
+  }
+
+  Future<void> _onCleanPastDoses(
+    CleanPastDosesEvent event,
+    Emitter<MedicationState> emit,
+  ) async {
+    try {
+      await deletePastDosesOlderThan(event.cutoff);
       add(LoadPastDoses()); // Refresh past doses list
     } catch (e) {
       emit(MedicationError(e.toString()));

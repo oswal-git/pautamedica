@@ -17,4 +17,5 @@ abstract class MedicationRepository {
 
   Future<String?> exportMedications();
   Future<void> importMedications();
+  Future<void> deletePastDosesOlderThan(DateTime cutoff);
 }

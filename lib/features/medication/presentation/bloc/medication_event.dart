@@ -70,3 +70,12 @@ class GenerateDosesEvent extends MedicationEvent {}
 class ExportMedicationsEvent extends MedicationEvent {}
 
 class ImportMedicationsEvent extends MedicationEvent {}
+
+class CleanPastDosesEvent extends MedicationEvent {
+  final DateTime cutoff;
+
+  const CleanPastDosesEvent(this.cutoff);
+
+  @override
+  List<Object?> get props => [cutoff];
+}
