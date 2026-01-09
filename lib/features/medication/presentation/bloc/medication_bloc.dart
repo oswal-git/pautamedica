@@ -152,7 +152,8 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     Emitter<MedicationState> emit,
   ) async {
     try {
-      final updatedDose = event.dose.copyWith(status: event.status);
+      final updatedDose =
+          event.dose.copyWith(status: event.status, markedAt: DateTime.now());
       await updateDoseStatus(updatedDose);
       if (event.refreshPastDoses) {
         add(LoadPastDoses()); // Refresh past doses list

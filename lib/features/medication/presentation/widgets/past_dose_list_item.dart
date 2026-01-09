@@ -114,9 +114,22 @@ class PastDoseListItem extends StatelessWidget {
                       color: Colors.grey.shade600,
                     ),
                   ),
-                  if (dose.markedAt != null) // Display markedAt if available
+                  if (dose.markedAt != null &&
+                      dose.status ==
+                          DoseStatus.taken) // Display markedAt if available
                     Text(
                       'Tomada el ${DateFormat('dd/MM/yyyy HH:mm').format(dose.markedAt!)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  if (dose.markedAt != null &&
+                      dose.status ==
+                          DoseStatus.notTaken) // Display markedAt if available
+                    Text(
+                      'Desistida el ${DateFormat('dd/MM/yyyy HH:mm').format(dose.markedAt!)}',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
