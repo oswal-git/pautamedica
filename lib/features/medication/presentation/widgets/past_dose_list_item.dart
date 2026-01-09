@@ -12,7 +12,7 @@ class PastDoseListItem extends StatelessWidget {
   final bool isMostRecent; // New property
   final Function(List<String>, int)? onImageTap; // Changed callback signature
 
-    final String medicationDescription;
+  final String medicationDescription;
 
   const PastDoseListItem({
     super.key,
@@ -69,7 +69,8 @@ class PastDoseListItem extends StatelessWidget {
                 height: 64, // Reduced size
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: displayImagePath.isNotEmpty && File(displayImagePath).existsSync()
+                  child: displayImagePath.isNotEmpty &&
+                          File(displayImagePath).existsSync()
                       ? Image.file(
                           File(displayImagePath),
                           fit: BoxFit.cover,
@@ -125,23 +126,7 @@ class PastDoseListItem extends StatelessWidget {
                 ],
               ),
             ),
-            Row(
-              children: [
-                _getStatusIcon(dose.status),
-                if (isMostRecent &&
-                    onUnmark != null) // Conditionally show unmark button
-                  IconButton(
-                    icon: const Icon(Icons.undo), // Or Icons.refresh
-                    onPressed: onUnmark,
-                    iconSize: 28, // Reduced icon size
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: onDelete,
-                  iconSize: 28, // Reduced icon size
-                ),
-              ],
-            ),
+            _getStatusIcon(dose.status),
           ],
         ),
       ),

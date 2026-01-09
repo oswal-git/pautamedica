@@ -55,31 +55,121 @@ class _PastDosesPageState extends State<PastDosesPage> {
                 final isMostRecent =
                     state.mostRecentDoseIds[dose.medicationId] == dose.id;
                 final medication = state.medicationsMap[dose.medicationId];
-                return PastDoseListItem(
-                  dose: dose,
-                  medicationDescription:
-                      medication?.description ?? '', // Pass description
-                  isMostRecent: isMostRecent,
-                  onDelete: () {
-                    context
-                        .read<MedicationBloc>()
-                        .add(DeleteDoseEvent(dose.id));
+                return Dismissible(
+                  key: Key(dose.id.toString()),
+                  direction: isMostRecent
+                      ? DismissDirection.horizontal
+                      : DismissDirection.endToStart,
+                  confirmDismiss: (direction) async {
+                    if (direction == DismissDirection.endToStart) {
+                      // Swipe right to delete
+                      return await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Eliminar Toma'),
+                            content: const Text(
+                                '¿Estás seguro de que quieres eliminar esta toma?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text('Eliminar'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    } else if (direction == DismissDirection.startToEnd &&
+                        isMostRecent) {
+                      // Swipe left to unmark if possible
+                      return await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Desmarcar Toma'),
+                            content: const Text(
+                                '¿Estás seguro de que quieres desmarcar esta toma?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text('Desmarcar'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
+                    return false;
                   },
-                  onUnmark: isMostRecent
-                      ? () {
-                          context.read<MedicationBloc>().add(
-                                UpdateDoseStatusEvent(
-                                  dose,
-                                  DoseStatus
-                                      .upcoming, // Or DoseStatus.expired based on time
-                                  refreshPastDoses: true, // Set to true
-                                ),
-                              );
-                        }
-                      : null,
-                  onImageTap: (imagePaths, initialIndex) =>
-                      _showImageFullScreen(context, dose.medicationName,
-                          imagePaths, initialIndex),
+                  onDismissed: (direction) {
+                    if (direction == DismissDirection.endToStart) {
+                      // Swipe right to delete
+                      context
+                          .read<MedicationBloc>()
+                          .add(DeleteDoseEvent(dose.id));
+                    } else if (direction == DismissDirection.startToEnd &&
+                        isMostRecent) {
+                      // Swipe left to unmark
+                      context.read<MedicationBloc>().add(
+                            UpdateDoseStatusEvent(
+                              dose,
+                              DoseStatus.upcoming,
+                              refreshPastDoses: true,
+                            ),
+                          );
+                    }
+                  },
+                  background: isMostRecent
+                      ? Container(
+                          color: Colors.blue,
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.only(left: 20),
+                          child: const Icon(Icons.undo, color: Colors.white),
+                        )
+                      : Container(),
+                  secondaryBackground: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  child: PastDoseListItem(
+                    dose: dose,
+                    medicationDescription:
+                        medication?.description ?? '', // Pass description
+                    isMostRecent: isMostRecent,
+                    onDelete: () {
+                      context
+                          .read<MedicationBloc>()
+                          .add(DeleteDoseEvent(dose.id));
+                    },
+                    onUnmark: isMostRecent
+                        ? () {
+                            context.read<MedicationBloc>().add(
+                                  UpdateDoseStatusEvent(
+                                    dose,
+                                    DoseStatus.upcoming,
+                                    refreshPastDoses: true,
+                                  ),
+                                );
+                          }
+                        : null,
+                    onImageTap: (imagePaths, initialIndex) =>
+                        _showImageFullScreen(context, dose.medicationName,
+                            imagePaths, initialIndex),
+                  ),
                 );
               },
             );
