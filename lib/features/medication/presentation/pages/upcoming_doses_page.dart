@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_state.dart';
@@ -84,9 +85,36 @@ class _UpcomingDosesPageState extends State<UpcomingDosesPage> {
                   dose: dose,
                   medicationDescription:
                       medication?.description ?? '', // Pass description
-                  onStatusChanged: (status) {
-                    context.read<MedicationBloc>().add(UpdateDoseStatusEvent(
-                        dose, status,
+                  onStatusChanged: (status) async {
+                    final bloc = context.read<MedicationBloc>();
+                    if (status == DoseStatus.taken &&
+                        dose.time.isAfter(DateTime.now())) {
+                      final shouldProceed = await showDialog<bool>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Confirmar Toma Futura'),
+                            content: const Text(
+                                'La dosis es posterior a hoy. ¿Estás seguro de que quieres marcarla como tomada?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text('Afirmar'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (shouldProceed != true) return;
+                    }
+                    if (!mounted) return;
+                    bloc.add(UpdateDoseStatusEvent(dose, status,
                         refreshPastDoses: false)); // Explicitly set to false
                   },
                   onImageTap: (imagePaths, initialIndex) =>
