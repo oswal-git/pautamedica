@@ -1,169 +1,169 @@
 {
-  // Tema de alto contraste
-  "workbench.colorTheme": "Default High Contrast",
+    // Tema de alto contraste
+    "workbench.colorTheme": "Default High Contrast",
 
-  // Configuración de colores personalizados para máximo contraste
-  "workbench.colorCustomizations": {
-    "editor.background": "#000000",
-    "editor.foreground": "#FFFFFF",
-    "editor.lineHighlightBackground": "#1A1A1A",
-    "editor.lineHighlightBorder": "#333333",
-    "editor.selectionBackground": "#264F78",
-    "editor.selectionHighlightBackground": "#1A1A1A",
-    "editor.findMatchBackground": "#515C6A",
-    "editor.findMatchHighlightBackground": "#3A3D41",
-    "sideBar.background": "#1E1E1E",
-    "sideBar.foreground": "#FFFFFF",
-    "sideBarTitle.foreground": "#FFFFFF",
-    "activityBar.activeBorder": "#FFFFFF",
-    "terminal.background": "#000000",
-    "terminal.foreground": "#FFFFFF",
-    "tab.activeBackground": "#1E1E1E",
-    "tab.inactiveBackground": "#2D2D2D",
-    "tab.activeForeground": "#FFFFFF",
-    "tab.inactiveForeground": "#CCCCCC",
-    "chat.editorBackground": "#000000",
-    "chat.editorForeground": "#FFFFFF",
-    "chat.inputBackground": "#1A1A1A",
-    "chat.inputBorder": "#333333",
-    "chat.inputForeground": "#FFFFFF",
-    "chat.inputPlaceholderForeground": "#888888",
-    "chat.sendButtonBackground": "#007ACC",
-    "chat.sendButtonForeground": "#FFFFFF",
-    "chat.sendButtonHoverBackground": "#005A9E",
-    "chat.userMessageBackground": "#1E3A5F",
-    "chat.userMessageForeground": "#FFFFFF",
-    "chat.userMessageBorder": "#264F78",
-    "chat.assistantMessageBackground": "#2D2D2D",
-    "chat.assistantMessageForeground": "#FFFFFF",
-    "chat.assistantMessageBorder": "#444444",
-    "chat.codeBlockBackground": "#1A1A1A",
-    "chat.codeBlockForeground": "#FFFFFF",
-    "chat.codeBlockBorder": "#333333",
-    "chat.linkForeground": "#75BEFF",
-    "chat.linkHoverForeground": "#4A9EFF",
-    "chat.actionButtonBackground": "#333333",
-    "chat.actionButtonForeground": "#FFFFFF",
-    "chat.actionButtonHoverBackground": "#444444",
-    "chat.scrollbarBackground": "#333333",
-    "chat.scrollbarSliderBackground": "#666666",
-    "chat.scrollbarSliderHoverBackground": "#888888",
-    "chat.separatorBackground": "#333333",
-    "chat.statusBackground": "#1A1A1A",
-    "chat.statusForeground": "#888888",
-    "chat.tooltipBackground": "#1E1E1E",
-    "chat.tooltipForeground": "#FFFFFF",
-    "chat.tooltipBorder": "#333333"
-  },
+    // Configuración de colores personalizados para máximo contraste
+    "workbench.colorCustomizations": {
+        "editor.background": "#000000",
+        "editor.foreground": "#FFFFFF",
+        "editor.lineHighlightBackground": "#1A1A1A",
+        "editor.lineHighlightBorder": "#333333",
+        "editor.selectionBackground": "#264F78",
+        "editor.selectionHighlightBackground": "#1A1A1A",
+        "editor.findMatchBackground": "#515C6A",
+        "editor.findMatchHighlightBackground": "#3A3D41",
+        "sideBar.background": "#1E1E1E",
+        "sideBar.foreground": "#FFFFFF",
+        "sideBarTitle.foreground": "#FFFFFF",
+        "activityBar.activeBorder": "#FFFFFF",
+        "terminal.background": "#000000",
+        "terminal.foreground": "#FFFFFF",
+        "tab.activeBackground": "#1E1E1E",
+        "tab.inactiveBackground": "#2D2D2D",
+        "tab.activeForeground": "#FFFFFF",
+        "tab.inactiveForeground": "#CCCCCC",
+        "chat.editorBackground": "#000000",
+        "chat.editorForeground": "#FFFFFF",
+        "chat.inputBackground": "#1A1A1A",
+        "chat.inputBorder": "#333333",
+        "chat.inputForeground": "#FFFFFF",
+        "chat.inputPlaceholderForeground": "#888888",
+        "chat.sendButtonBackground": "#007ACC",
+        "chat.sendButtonForeground": "#FFFFFF",
+        "chat.sendButtonHoverBackground": "#005A9E",
+        "chat.userMessageBackground": "#1E3A5F",
+        "chat.userMessageForeground": "#FFFFFF",
+        "chat.userMessageBorder": "#264F78",
+        "chat.assistantMessageBackground": "#2D2D2D",
+        "chat.assistantMessageForeground": "#FFFFFF",
+        "chat.assistantMessageBorder": "#444444",
+        "chat.codeBlockBackground": "#1A1A1A",
+        "chat.codeBlockForeground": "#FFFFFF",
+        "chat.codeBlockBorder": "#333333",
+        "chat.linkForeground": "#75BEFF",
+        "chat.linkHoverForeground": "#4A9EFF",
+        "chat.actionButtonBackground": "#333333",
+        "chat.actionButtonForeground": "#FFFFFF",
+        "chat.actionButtonHoverBackground": "#444444",
+        "chat.scrollbarBackground": "#333333",
+        "chat.scrollbarSliderBackground": "#666666",
+        "chat.scrollbarSliderHoverBackground": "#888888",
+        "chat.separatorBackground": "#333333",
+        "chat.statusBackground": "#1A1A1A",
+        "chat.statusForeground": "#888888",
+        "chat.tooltipBackground": "#1E1E1E",
+        "chat.tooltipForeground": "#FFFFFF",
+        "chat.tooltipBorder": "#333333"
+    },
 
-  // Configuración de tipografía
-  "editor.fontFamily": "Consolas, 'Courier New', monospace",
-  "editor.fontSize": 14,
-  "editor.fontWeight": "normal",
-  "editor.lineHeight": 1.5,
+    // Configuración de tipografía
+    "editor.fontFamily": "Consolas, 'Courier New', monospace",
+    "editor.fontSize": 14,
+    "editor.fontWeight": "normal",
+    "editor.lineHeight": 1.5,
 
-  // Configuración del editor
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
-  "editor.detectIndentation": false,
-  "editor.wordWrap": "on",
-  "editor.lineNumbers": "on",
-  "editor.rulers": [80, 120],
-  "editor.minimap.enabled": true,
-  "editor.minimap.maxColumn": 120,
-  "editor.minimap.renderCharacters": false,
-  "editor.minimap.showSlider": "always",
+    // Configuración del editor
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.wordWrap": "on",
+    "editor.lineNumbers": "on",
+    "editor.rulers": [80, 120],
+    "editor.minimap.enabled": false,
+    "editor.minimap.maxColumn": 120,
+    "editor.minimap.renderCharacters": false,
+    "editor.minimap.showSlider": "always",
 
-  // Configuración de scrollbar
-  "editor.scrollbar.vertical": "visible",
-  "editor.scrollbar.horizontal": "visible",
-  "editor.scrollbar.verticalScrollbarSize": 14,
-  "editor.scrollbar.horizontalScrollbarSize": 14,
+    // Configuración de scrollbar
+    "editor.scrollbar.vertical": "visible",
+    "editor.scrollbar.horizontal": "visible",
+    "editor.scrollbar.verticalScrollbarSize": 14,
+    "editor.scrollbar.horizontalScrollbarSize": 14,
 
-  // Configuración de bracket matching
-  "editor.bracketPairColorization.enabled": true,
-  "editor.guides.bracketPairs": true,
-  "editor.guides.highlightActiveIndentGuide": true,
-  "editor.guides.indentation": true,
+    // Configuración de bracket matching
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    "editor.guides.highlightActiveIndentGuide": true,
+    "editor.guides.indentation": true,
 
-  // Configuración del cursor
-  "editor.cursorStyle": "line",
-  "editor.cursorWidth": 2,
-  "editor.cursorBlinking": "blink",
+    // Configuración del cursor
+    "editor.cursorStyle": "line",
+    "editor.cursorWidth": 2,
+    "editor.cursorBlinking": "blink",
 
-  // Configuración de autocompletado
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": true,
-    "strings": true
-  },
-  "editor.suggest.showKeywords": true,
-  "editor.suggest.showSnippets": true,
-  "editor.suggest.showClasses": true,
-  "editor.suggest.showFunctions": true,
-  "editor.suggest.showVariables": true,
-  "editor.suggest.showConstants": true,
-  "editor.suggest.showEnums": true,
-  "editor.suggest.showModules": true,
-  "editor.suggest.showProperties": true,
-  "editor.suggest.showEvents": true,
-  "editor.suggest.showOperators": true,
-  "editor.suggest.showUnits": true,
-  "editor.suggest.showValues": true,
-  "editor.suggest.showColors": true,
-  "editor.suggest.showFiles": true,
-  "editor.suggest.showReferences": true,
-  "editor.suggest.showFolders": true,
-  "editor.suggest.showTypeParameters": true,
-  "editor.suggest.showWords": true,
-  "editor.suggest.showUsers": true,
-  "editor.suggest.showIssues": true,
+    // Configuración de autocompletado
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": true,
+        "strings": true
+    },
+    "editor.suggest.showKeywords": true,
+    "editor.suggest.showSnippets": true,
+    "editor.suggest.showClasses": true,
+    "editor.suggest.showFunctions": true,
+    "editor.suggest.showVariables": true,
+    "editor.suggest.showConstants": true,
+    "editor.suggest.showEnums": true,
+    "editor.suggest.showModules": true,
+    "editor.suggest.showProperties": true,
+    "editor.suggest.showEvents": true,
+    "editor.suggest.showOperators": true,
+    "editor.suggest.showUnits": true,
+    "editor.suggest.showValues": true,
+    "editor.suggest.showColors": true,
+    "editor.suggest.showFiles": true,
+    "editor.suggest.showReferences": true,
+    "editor.suggest.showFolders": true,
+    "editor.suggest.showTypeParameters": true,
+    "editor.suggest.showWords": true,
+    "editor.suggest.showUsers": true,
+    "editor.suggest.showIssues": true,
 
-  // Configuración de Flutter/Dart
-  "dart.lineLength": 80,
-  "dart.enableSdkFormatter": true,
-  "dart.showTodos": true,
+    // Configuración de Flutter/Dart
+    "dart.lineLength": 80,
+    "dart.enableSdkFormatter": true,
+    "dart.showTodos": true,
 
-  // Configuración de archivos
-  "files.autoSave": "onFocusChange",
-  "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true,
+    // Configuración de archivos
+    "files.autoSave": "onFocusChange",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
 
-  // Configuración de búsqueda
-  "search.showLineNumbers": true,
-  "search.useGlobalIgnoreFiles": true,
+    // Configuración de búsqueda
+    "search.showLineNumbers": true,
+    "search.useGlobalIgnoreFiles": true,
 
-  // Configuración de Git
-  "git.enableSmartCommit": true,
-  "git.confirmSync": false,
-  "git.path": "C:\\Program Files\\Git\\bin\\git.exe",
+    // Configuración de Git
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.path": "C:\\Program Files\\Git\\bin\\git.exe",
 
-  // Configuración de extensiones
-  "extensions.ignoreRecommendations": false,
-  "extensions.autoUpdate": true,
+    // Configuración de extensiones
+    "extensions.ignoreRecommendations": false,
+    "extensions.autoUpdate": true,
 
-  // 🎨 CONFIGURACIÓN ESPECÍFICA DEL CHAT DE CURSOR
-  // Configuración de la interfaz del chat
-  "chat.editor.fontSize": 14,
-  "chat.editor.fontFamily": "Consolas, 'Courier New', monospace",
-  "chat.editor.lineHeight": 1.6,
+    // 🎨 CONFIGURACIÓN ESPECÍFICA DEL CHAT DE CURSOR
+    // Configuración de la interfaz del chat
+    "chat.editor.fontSize": 14,
+    "chat.editor.fontFamily": "Consolas, 'Courier New', monospace",
+    "chat.editor.lineHeight": 1.6,
 
-  // Configuración de la entrada del chat
-  "chat.input.fontSize": 14,
-  "chat.input.fontFamily": "Consolas, 'Courier New', monospace",
-  "chat.input.padding": 12,
+    // Configuración de la entrada del chat
+    "chat.input.fontSize": 14,
+    "chat.input.fontFamily": "Consolas, 'Courier New', monospace",
+    "chat.input.padding": 12,
 
-  // Configuración de los mensajes
-  "chat.message.padding": 16,
-  "chat.message.margin": 8,
-  "chat.message.borderRadius": 8,
+    // Configuración de los mensajes
+    "chat.message.padding": 16,
+    "chat.message.margin": 8,
+    "chat.message.borderRadius": 8,
 
-  // Configuración de bloques de código
-  "chat.codeBlock.padding": 12,
-  "chat.codeBlock.borderRadius": 6,
-  "chat.codeBlock.fontSize": 13,
+    // Configuración de bloques de código
+    "chat.codeBlock.padding": 12,
+    "chat.codeBlock.borderRadius": 6,
+    "chat.codeBlock.fontSize": 13,
 
-  // Configuración de scroll
-  "chat.scrollBehavior": "smooth",
-  "chat.autoScroll": true
+    // Configuración de scroll
+    "chat.scrollBehavior": "smooth",
+    "chat.autoScroll": true
 }

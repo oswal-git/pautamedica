@@ -46,3 +46,6 @@ app.*.map.json
 windows/flutter/ephemeral/
 macos/Flutter/ephemeral/
 macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Gemini tasks
+tareas_gemini/
