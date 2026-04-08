@@ -1,0 +1,20 @@
+<!-- android/app/src/main/res/values-v31/themes.xml -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Theme base -->
+    <style name="NightAdjusted.Theme" parent="android:Theme.Material.Light.NoActionBar"/>
+
+    <!-- Splash moderno solo en Android 12+ -->
+    <style name="LaunchTheme" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_color</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+        <item name="postSplashScreenTheme">@style/NormalTheme</item>
+    </style>
+
+    <style name="NormalTheme" parent="NightAdjusted.Theme">
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
+    </style>
+
+</resources>

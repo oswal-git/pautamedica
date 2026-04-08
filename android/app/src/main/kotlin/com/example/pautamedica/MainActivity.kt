@@ -1,4 +1,4 @@
-package com.example.pautamedica
+package com.eglos.pautamedica
 
 import io.flutter.embedding.android.FlutterActivity
 
