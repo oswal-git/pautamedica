@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Tema base para la aplicación -->
+    <style name="Theme.App" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
+    </style>
+
+    <!-- Tema para la pantalla de splash (LaunchTheme) -->
+    <style name="LaunchTheme" parent="Theme.SplashScreen">
+        <!-- Color de fondo de la pantalla de splash -->
+        <item name="windowSplashScreenBackground">@color/splash_color</item>
+        
+        <!-- El ícono que se mostrará en el centro -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
+        
+        <!-- El tema al que la app transicionará después del splash -->
+        <item name="postSplashScreenTheme">@style/NormalTheme</item>
+    </style>
+
+    <style name="NormalTheme" parent="Theme.App" />
+
+    <!-- Estilo para la actividad de recorte de imagen (UCropActivity) -->
+    <style name="AppTheme.FullScreen.Crop" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+</resources>

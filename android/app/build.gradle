@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.pautamedica"
+    namespace = "com.eglos.pautamedica"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -22,11 +22,12 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.pautamedica"
+        applicationId = "com.eglos.pautamedica"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdkVersion flutter.minSdkVersion
-        targetSdk = 35
+        //flutter.minSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -42,6 +43,7 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "androidx.core:core-splashscreen:1.0.1"
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
 

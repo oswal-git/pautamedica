@@ -35,10 +35,10 @@ class DoseListItem extends StatelessWidget {
     }
 
     if (doseDate == tomorrow) {
-      return Colors.white; // White for tomorrow
+      return const Color.fromARGB(255, 255, 255, 255); // White for tomorrow
     }
 
-    return Colors.grey.shade100; // Light gray for other days
+    return Colors.blue.shade50; // Light gray for other days
   }
 
   @override
@@ -53,6 +53,7 @@ class DoseListItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 4,
       color: _getCardColor(dose),
+      surfaceTintColor: Colors.transparent, // Fixes grayish tint in Material 3
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),

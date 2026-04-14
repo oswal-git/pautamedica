@@ -374,17 +374,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final batch = db.batch();
 
     final now = DateTime.now();
-    final threeMonthsFromNow = now.add(const Duration(days: 90));
+    final sixMonthsFromNow = now.add(const Duration(days: 185));
 
     final startDate = medication.firstDoseDate != null &&
             medication.firstDoseDate!.isAfter(medication.createdAt)
         ? medication.firstDoseDate!
         : medication.createdAt;
-
-    if (medication.firstDoseDate != null &&
-        medication.firstDoseDate!.isAfter(now)) {
-      return;
-    }
 
     if (medication.repetitionType == RepetitionType.none) {
       for (final schedule in medication.schedules) {
@@ -417,7 +412,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
     } else {
       var currentDate = startDate;
 
-      while (currentDate.isBefore(threeMonthsFromNow)) {
+      while (currentDate.isBefore(sixMonthsFromNow)) {
         if (medication.endDate != null &&
             currentDate.isAfter(medication.endDate!)) {
           break;
@@ -468,6 +463,50 @@ class MedicationRepositoryImpl implements MedicationRepository {
     }
 
     await batch.commit(noResult: true);
+    await rescheduleAllNotifications();
+  }
+
+  @override
+  Future<void> rescheduleAllNotifications() async {
+    final notificationService = NotificationService();
+    await notificationService.init();
+
+    // Cancel all previously scheduled notifications
+    await notificationService.cancelAllNotifications();
+
+    final db = await database;
+    final now = DateTime.now();
+
+    // Fetch the next 50 upcoming doses with an INNER JOIN to get medication details
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT
+        d.id,
+        d.medicationId,
+        m.name as medicationName,
+        m.imagePaths as medicationImagePaths,
+        d.time,
+        d.status,
+        d.notificationSentCount,
+        d.markedAt
+      FROM $_dosesTableName d
+      INNER JOIN $_medicationsTableName m ON d.medicationId = m.id
+      WHERE d.status = ? AND d.time > ?
+      ORDER BY d.time ASC
+      LIMIT 50
+    ''', ['upcoming', now.toIso8601String()]);
+
+    final upcomingDoses = maps.map((map) => _mapToDose(map)).toList();
+
+    for (final dose in upcomingDoses) {
+      await notificationService.scheduleNotification(
+        dose: dose,
+        title: 'Toma de Medicación',
+        body: 'Es hora de tomar tu ${dose.medicationName}',
+      );
+    }
+
+    _logger.i(
+        "Repository: Rescheduled ${upcomingDoses.length} notifications.");
   }
 
   @override
@@ -477,18 +516,13 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final batch = db.batch();
 
     final now = DateTime.now();
-    final threeMonthsFromNow = now.add(const Duration(days: 90));
+    final sixMonthsFromNow = now.add(const Duration(days: 185));
 
     for (final medication in medications) {
       final startDate = medication.firstDoseDate != null &&
               medication.firstDoseDate!.isAfter(medication.createdAt)
           ? medication.firstDoseDate!
           : medication.createdAt;
-
-      if (medication.firstDoseDate != null &&
-          medication.firstDoseDate!.isAfter(now)) {
-        continue;
-      }
 
       if (medication.repetitionType == RepetitionType.none) {
         for (final schedule in medication.schedules) {
@@ -521,7 +555,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       } else {
         var currentDate = startDate;
 
-        while (currentDate.isBefore(threeMonthsFromNow)) {
+        while (currentDate.isBefore(sixMonthsFromNow)) {
           if (medication.endDate != null &&
               currentDate.isAfter(medication.endDate!)) {
             break;
@@ -574,13 +608,15 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
     await batch.commit(noResult: true);
 
-    // Delete doses older than 3 months
-    final threeMonthsAgo = now.subtract(const Duration(days: 90));
+    // Delete doses older than 6 months
+    final sixMonthsAgo = now.subtract(const Duration(days: 185));
     await db.delete(
       _dosesTableName,
       where: 'time < ?',
-      whereArgs: [threeMonthsAgo.toIso8601String()],
+      whereArgs: [sixMonthsAgo.toIso8601String()],
     );
+
+    await rescheduleAllNotifications();
   }
 
   Map<String, dynamic> _doseToMap(Dose dose) {

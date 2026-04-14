@@ -9,6 +9,7 @@ import 'package:pautamedica/features/medication/presentation/bloc/medication_eve
 import 'package:pautamedica/core/di/injection_container.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:pautamedica/features/medication/data/notification_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 final _logger = Logger();
 
@@ -33,6 +34,12 @@ void main() async {
 
   // Initialize dependency injection
   await init();
+
+  // Request permissions for notifications and exact alarms
+  await [
+    Permission.notification,
+    Permission.scheduleExactAlarm,
+  ].request();
 
   Workmanager().initialize(
     callbackDispatcher,
