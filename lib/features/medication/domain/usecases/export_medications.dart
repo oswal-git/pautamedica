@@ -4,5 +4,5 @@ class ExportMedications {
   final MedicationRepository repository;
 
   ExportMedications(this.repository);
-  Future<String?> call() => repository.exportMedications();
+  Future<Map<String, dynamic>?> call() => repository.exportMedications();
 }

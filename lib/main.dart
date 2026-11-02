@@ -5,7 +5,6 @@ import 'package:pautamedica/app/app.dart';
 import 'package:pautamedica/app/bloc_observer.dart';
 import 'package:pautamedica/background_service.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
-import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
 import 'package:pautamedica/core/di/injection_container.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:pautamedica/features/medication/data/notification_service.dart';
@@ -32,32 +31,32 @@ void callbackDispatcher() {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize dependency injection
-  await init();
+  try {
+    // Initialize dependency injection
+    await init();
 
-  // Request permissions for notifications and exact alarms
-  await [
-    Permission.notification,
-    Permission.scheduleExactAlarm,
-  ].request();
+    // Request permissions for notifications and exact alarms
+    await [
+      Permission.notification,
+      Permission.scheduleExactAlarm,
+    ].request();
+  } catch (e, stackTrace) {
+    _logger.e("Initialization error", error: e, stackTrace: stackTrace);
+  }
 
   Workmanager().initialize(
     callbackDispatcher,
-  );
-  Workmanager().registerOneOffTask(
-    '2',
-    'pautamedica_one_off_dose_check',
-    initialDelay: Duration(seconds: 10),
   );
   Workmanager().registerPeriodicTask(
     '1',
     'pautamedica_dose_check',
     frequency: const Duration(hours: 1),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
   );
   Bloc.observer = AppBlocObserver();
   runApp(
     BlocProvider(
-      create: (context) => sl<MedicationBloc>()..add(GenerateDosesEvent()),
+      create: (context) => sl<MedicationBloc>(),
       child: const App(),
     ),
   );

@@ -7,9 +7,10 @@ environment:
     sdk: ^3.6.0
 
 dependencies:
+    archive: ^3.6.1
     collection: ^1.19.1
     equatable: ^2.0.8
-    file_picker: ^10.3.8
+    file_picker: ^10.3.10
     flutter:
         sdk: flutter
     flutter_bloc: ^9.1.1

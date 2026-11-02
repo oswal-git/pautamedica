@@ -35,7 +35,7 @@ class NotificationService {
         ?.createNotificationChannel(channel);
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('app_icon');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     final InitializationSettings initializationSettings =
         InitializationSettings(
@@ -65,6 +65,7 @@ class NotificationService {
       'medication_channel', // Use the static channel ID
       'Medication Reminders', // Use the static channel name
       channelDescription: 'Notifications for medication reminders',
+      icon: '@mipmap/ic_launcher',
       importance: Importance.max,
       priority: Priority.high,
       visibility: NotificationVisibility.public,
@@ -99,6 +100,7 @@ class NotificationService {
       'medication_channel',
       'Medication Reminders',
       channelDescription: 'Notifications for medication reminders',
+      icon: '@mipmap/ic_launcher',
       importance: Importance.max,
       priority: Priority.high,
       visibility: NotificationVisibility.public,

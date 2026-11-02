@@ -1,13 +1,14 @@
-# TODO: Fix List Position After Deleting Taken Dose
+# TODO: Fix Importación Error Database UNIQUE constraint doses.id
 
-## Task Description
+Estado: En progreso
 
-When deleting a taken dose in PastDosesPage, the list scrolls to the beginning. It should position itself to the next taken dose.
+## Pasos:
 
-## Steps to Complete
+- [x]   1. Editar `lib/features/medication/data/repositories/medication_repository_impl.dart`:
+    - En `importMedications()`: DROP IF EXISTS + recreate tables + inserts con ConflictAlgorithm.replace + logs. ✓ Completado.
+- [x]   2. En `generateDoses()` / `regenerate`: Añadir ConflictAlgorithm.replace al batch.insert para evitar errores de concurrencia post-importación. ✓ Completado.
+- [x]   3. Corregir firmas de import/export en Repo, Interfaz y UseCases para devolver estadísticas. ✓ Completado.
+- [ ] 3.1. Asegurar que `domain/usecases/import_medications.dart` y `export_medications.dart` devuelven `Future<Map<String, dynamic>?>`.
+- [ ]   4. Verificar no error en OPPO si posible, marcar completado.
 
--   [ ] Add ScrollController to PastDosesPage state
--   [ ] Add variable to track deleted index
--   [ ] Modify onDismissed to set deleted index before dispatching delete event
--   [ ] Add BlocListener to handle scroll after state update
--   [ ] Test the implementation
+Próximos: Editar archivo principal.Próximos: Editar archivo principal.

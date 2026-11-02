@@ -7,18 +7,19 @@ abstract class MedicationRepository {
   Future<Medication> saveMedication(Medication medication);
   Future<void> deleteMedication(String id);
   Future<Medication> updateMedication(Medication medication);
+  Future<void> reorderMedications(List<String> medicationIds);
 
   Future<List<Dose>> getUpcomingDoses();
   Future<PastDosesResult> getPastDoses(); // Changed return type
   Future<void> updateDose(Dose dose);
+  Future<void> addDose(Dose dose);
   Future<void> deleteDose(String id);
   Future<void> generateDoses();
   Future<void> regenerateDosesForMedication(String medicationId);
 
-  Future<String?> exportMedications();
-  Future<void> importMedications();
+  Future<Map<String, dynamic>?> exportMedications();
+  Future<Map<String, dynamic>?> importMedications();
   Future<void> deletePastDosesOlderThan(DateTime cutoff);
+  Future<void> markPastDosesAsNotTaken(DateTime cutoff);
   Future<void> rescheduleAllNotifications();
 }
-  Future<void> reorderMedications(List<String> medicationIds);
-  Future<void> addDose(Dose dose);

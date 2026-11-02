@@ -4,5 +4,5 @@ class ImportMedications {
   final MedicationRepository repository;
 
   ImportMedications(this.repository);
-  Future<void> call() => repository.importMedications();
+  Future<Map<String, dynamic>?> call() => repository.importMedications();
 }
