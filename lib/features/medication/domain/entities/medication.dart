@@ -17,6 +17,7 @@ class Medication extends Equatable {
   final int? repetitionInterval; // Nullable if repetitionType is none
   final bool indefinite;
   final DateTime? endDate; // Replaces repeatEndDate
+  final int sortOrder;
 
   const Medication({
     required this.id,
@@ -31,6 +32,7 @@ class Medication extends Equatable {
     this.repetitionInterval,
     this.indefinite = false,
     this.endDate,
+    this.sortOrder = 0,
   });
 
     Medication copyWith({
@@ -46,6 +48,7 @@ class Medication extends Equatable {
     int? repetitionInterval,
     bool? indefinite,
     DateTime? endDate,
+    int? sortOrder,
   }) {
     return Medication(
       id: id ?? this.id,
@@ -60,6 +63,7 @@ class Medication extends Equatable {
       repetitionInterval: repetitionInterval ?? this.repetitionInterval,
       indefinite: indefinite ?? this.indefinite,
       endDate: endDate ?? this.endDate,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
@@ -77,5 +81,6 @@ class Medication extends Equatable {
         repetitionInterval,
         indefinite,
         endDate,
+        sortOrder,
       ];
 }

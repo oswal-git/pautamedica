@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:pautamedica/features/medication/domain/entities/medication.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_state.dart';
@@ -38,8 +39,15 @@ class _MedicationListPageState extends State<MedicationListPage> {
           );
         } else if (state is MedicationImportSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Datos importados correctamente.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (state is PastDosesMarkedSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Datos importados correctamente.'),
+              content: Text('Dosis pasadas marcadas como desistidas.'),
               backgroundColor: Colors.green,
             ),
           );
@@ -75,6 +83,11 @@ class _MedicationListPageState extends State<MedicationListPage> {
                   context.read<MedicationBloc>().add(ExportMedicationsEvent());
                 } else if (value == 'import') {
                   context.read<MedicationBloc>().add(ImportMedicationsEvent());
+                } else if (value == 'marcarpasadas') {
+                  final bloc = context.read<MedicationBloc>();
+                  if (mounted) {
+                    bloc.add(MarkPastDosesAsNotTakenEvent());
+                  }
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -92,6 +105,13 @@ class _MedicationListPageState extends State<MedicationListPage> {
                     title: Text('Importar datos'),
                   ),
                 ),
+                const PopupMenuItem<String>(
+                  value: 'marcarpasadas',
+                  child: ListTile(
+                    leading: Icon(Icons.mark_chat_unread_outlined),
+                    title: Text('Marcar pasadas'),
+                  ),
+                ),
               ],
               icon: const Icon(Icons.more_vert),
             ),
@@ -102,11 +122,48 @@ class _MedicationListPageState extends State<MedicationListPage> {
             return current is MedicationLoaded ||
                 current is MedicationLoading ||
                 current is MedicationError ||
-                current is MedicationInitial;
+                current is MedicationInitial ||
+                current is MedicationImportLoading;
           },
           builder: (context, state) {
             _logger
                 .i('MedicationListPage: Estado actual: ${state.runtimeType}');
+
+            if (state is MedicationImportLoading) {
+              return Stack(
+                children: [
+                  _buildContent(state), // Fondo
+                  Container(
+                    color: Colors.black54,
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.deepPurple,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Importando datos...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'Por favor espere.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
 
             if (state is MedicationLoading || state is UpcomingDosesLoaded) {
               _logger.i('MedicationListPage: Mostrando loading...');
@@ -194,13 +251,15 @@ class _MedicationListPageState extends State<MedicationListPage> {
                 );
               }
 
-              return ListView.builder(
+              return ReorderableListView.builder(
                 padding: const EdgeInsets.only(
                   left: 16,
                   top: 16,
                   right: 16,
                   bottom: 80, // Added extra bottom padding for the FAB
                 ),
+                onReorder: (oldIndex, newIndex) =>
+                    _reorderMedications(state.medications, oldIndex, newIndex),
                 itemCount: state.medications.length,
                 itemBuilder: (context, index) {
                   final medication = state.medications[index];
@@ -213,6 +272,9 @@ class _MedicationListPageState extends State<MedicationListPage> {
                             context, medication, imagePaths, initialIndex),
                     onDelete: () => _confirmDelete(context, medication),
                     onEdit: () => _navigateToEdit(context, medication),
+                    onTake: () => context
+                        .read<MedicationBloc>()
+                        .add(RecordMedicationDoseEvent(medication)),
                   );
                 },
               );
@@ -246,6 +308,82 @@ class _MedicationListPageState extends State<MedicationListPage> {
         floatingActionButton: const AddMedicationFAB(),
       ),
     );
+  }
+
+  Widget _buildContent(MedicationState state) {
+    // Reutiliza la lógica del builder para el fondo durante import loading
+    if (state is MedicationLoaded) {
+      if (state.medications.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.medication_outlined,
+                size: 64,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay medicamentos registrados',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Toca el botón + para agregar tu primer medicamento',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      }
+      return ReorderableListView.builder(
+        padding: const EdgeInsets.only(
+          left: 16,
+          top: 16,
+          right: 16,
+          bottom: 80,
+        ),
+        onReorder: (oldIndex, newIndex) =>
+            _reorderMedications(state.medications, oldIndex, newIndex),
+        itemCount: state.medications.length,
+        itemBuilder: (context, index) {
+          final medication = state.medications[index];
+          return MedicationListItem(
+            key: ValueKey(medication.id),
+            medication: medication,
+            onTap: () => _showMedicationDetails(context, medication),
+            onImageTap: (imagePaths, initialIndex) => _showImageFullScreen(
+                context, medication, imagePaths, initialIndex),
+            onDelete: () => _confirmDelete(context, medication),
+            onEdit: () => _navigateToEdit(context, medication),
+            onTake: () => context
+                .read<MedicationBloc>()
+                .add(RecordMedicationDoseEvent(medication)),
+          );
+        },
+      );
+    }
+    // Para otros estados durante import, mostrar el loading normal o vacío
+    return const SizedBox.shrink();
+  }
+
+  void _reorderMedications(
+      List<Medication> medications, int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex--;
+    final reorderedMedications = List<Medication>.from(medications);
+    final medication = reorderedMedications.removeAt(oldIndex);
+    reorderedMedications.insert(newIndex, medication);
+    context
+        .read<MedicationBloc>()
+        .add(ReorderMedicationsEvent(reorderedMedications));
   }
 
   void _showMedicationDetails(BuildContext context, medication) {

@@ -10,6 +10,7 @@ class MedicationListItem extends StatelessWidget {
   final Function(List<String> imagePaths, int initialIndex) onImageTap;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final VoidCallback onTake;
 
   const MedicationListItem({
     super.key,
@@ -18,6 +19,7 @@ class MedicationListItem extends StatelessWidget {
     required this.onImageTap,
     required this.onDelete,
     required this.onEdit,
+    required this.onTake,
   });
 
   @override
@@ -132,6 +134,20 @@ class MedicationListItem extends StatelessWidget {
               // Botones de acción
               Column(
                 children: [
+                  IconButton(
+                    onPressed: onTake,
+                    icon: Icon(
+                      Icons.medication,
+                      color: Colors.green.shade700,
+                      size: 18,
+                    ),
+                    tooltip: 'Toma',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
+                  ),
                   // Botón de editar
                   IconButton(
                     onPressed: onEdit,
@@ -217,6 +233,8 @@ class MedicationListItem extends StatelessWidget {
           return 'Cada mes';
         }
         return 'Cada ${medication.repetitionInterval} meses';
+      case RepetitionType.asNeeded:
+        return 'A demanda';
     }
   }
 

@@ -20,3 +20,5 @@ abstract class MedicationRepository {
   Future<void> deletePastDosesOlderThan(DateTime cutoff);
   Future<void> rescheduleAllNotifications();
 }
+  Future<void> reorderMedications(List<String> medicationIds);
+  Future<void> addDose(Dose dose);

@@ -1,5 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import 'package:pautamedica/features/medication/domain/usecases/add_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/add_dose.dart';
+import 'package:pautamedica/features/medication/domain/entities/dose.dart';
+import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
+import 'package:pautamedica/features/medication/domain/entities/repetition_type.dart';
 import 'package:pautamedica/features/medication/domain/usecases/export_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/import_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_medication.dart';
@@ -8,18 +13,24 @@ import 'package:pautamedica/features/medication/domain/usecases/get_medications.
 import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/regenerate_doses_for_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/reorder_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_dose.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_past_doses_older_than.dart';
+import 'package:pautamedica/features/medication/domain/usecases/mark_past_doses_as_not_taken.dart';
 
 import 'medication_event.dart';
 import 'medication_state.dart';
+
+final _logger = Logger();
 
 // BLoC
 class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   final GetMedications getMedications;
   final AddMedication addMedication;
+  final AddDose addDose;
+  final ReorderMedications reorderMedications;
   final UpdateMedication updateMedication;
   final DeleteMedication deleteMedication;
   final GetUpcomingDoses getUpcomingDoses;
@@ -31,10 +42,13 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   final ImportMedications importMedications;
   final DeleteDose deleteDose;
   final DeletePastDosesOlderThan deletePastDosesOlderThan;
+  final MarkPastDosesAsNotTaken markPastDosesAsNotTaken;
 
   MedicationBloc({
     required this.getMedications,
     required this.addMedication,
+    required this.addDose,
+    required this.reorderMedications,
     required this.updateMedication,
     required this.deleteMedication,
     required this.getUpcomingDoses,
@@ -46,10 +60,13 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     required this.importMedications,
     required this.deleteDose,
     required this.deletePastDosesOlderThan,
+    required this.markPastDosesAsNotTaken,
   }) : super(MedicationInitial()) {
     on<LoadMedications>(_onLoadMedications);
     on<AddMedicationEvent>(_onAddMedication);
+    on<RecordMedicationDoseEvent>(_onRecordMedicationDose);
     on<UpdateMedicationEvent>(_onUpdateMedication);
+    on<ReorderMedicationsEvent>(_onReorderMedications);
     on<DeleteMedicationEvent>(_onDeleteMedication);
     on<LoadUpcomingDoses>(_onLoadUpcomingDoses);
     on<LoadPastDoses>(_onLoadPastDoses);
@@ -59,6 +76,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     on<ImportMedicationsEvent>(_onImportMedications);
     on<DeleteDoseEvent>(_onDeleteDose);
     on<CleanPastDosesEvent>(_onCleanPastDoses);
+    on<MarkPastDosesAsNotTakenEvent>(_onMarkPastDosesAsNotTaken);
   }
 
   Future<void> _onLoadMedications(
@@ -87,6 +105,28 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     }
   }
 
+  Future<void> _onRecordMedicationDose(
+    RecordMedicationDoseEvent event,
+    Emitter<MedicationState> emit,
+  ) async {
+    try {
+      final now = DateTime.now();
+      await addDose(Dose(
+        id: '${event.medication.id}_manual_${now.microsecondsSinceEpoch}',
+        medicationId: event.medication.id,
+        medicationName: event.medication.name,
+        medicationImagePaths: event.medication.imagePaths,
+        time: now,
+        status: DoseStatus.taken,
+        markedAt: now,
+      ));
+      add(LoadPastDoses());
+      add(LoadMedications());
+    } catch (e) {
+      emit(MedicationError(e.toString()));
+    }
+  }
+
   Future<void> _onUpdateMedication(
     UpdateMedicationEvent event,
     Emitter<MedicationState> emit,
@@ -94,6 +134,21 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     try {
       await updateMedication(event.medication);
       await regenerateDosesForMedication(event.medication.id);
+      add(LoadMedications());
+    } catch (e) {
+      emit(MedicationError(e.toString()));
+    }
+  }
+
+  Future<void> _onReorderMedications(
+    ReorderMedicationsEvent event,
+    Emitter<MedicationState> emit,
+  ) async {
+    emit(MedicationLoaded(event.medications));
+    try {
+      await reorderMedications(
+        event.medications.map((medication) => medication.id).toList(),
+      );
       add(LoadMedications());
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -119,10 +174,8 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     emit(MedicationLoading());
     try {
       final doses = await getUpcomingDoses();
-      final medications = await getMedications(); // Fetch all medications
-      final medicationsMap = {
-        for (var med in medications) med.id: med
-      }; // Create a map
+      final medications = await getMedications();
+      final medicationsMap = {for (var med in medications) med.id: med};
       emit(UpcomingDosesLoaded(doses, medicationsMap));
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -136,10 +189,8 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     emit(MedicationLoading());
     try {
       final result = await getPastDoses();
-      final medications = await getMedications(); // Fetch all medications
-      final medicationsMap = {
-        for (var med in medications) med.id: med
-      }; // Create a map
+      final medications = await getMedications();
+      final medicationsMap = {for (var med in medications) med.id: med};
       emit(PastDosesLoaded(
           result.doses, result.mostRecentDoseIds, medicationsMap));
     } catch (e) {
@@ -152,13 +203,21 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     Emitter<MedicationState> emit,
   ) async {
     try {
+      if (event.status == DoseStatus.upcoming) {
+        final medications = await getMedications();
+        if (medications.any((medication) =>
+            medication.id == event.dose.medicationId &&
+            medication.repetitionType == RepetitionType.asNeeded)) {
+          return;
+        }
+      }
       final updatedDose =
           event.dose.copyWith(status: event.status, markedAt: DateTime.now());
       await updateDoseStatus(updatedDose);
       if (event.refreshPastDoses) {
-        add(LoadPastDoses()); // Refresh past doses list
+        add(LoadPastDoses());
       } else {
-        add(LoadUpcomingDoses()); // Refresh upcoming doses list
+        add(LoadUpcomingDoses());
       }
     } catch (e) {
       emit(MedicationError(e.toString()));
@@ -172,7 +231,8 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     try {
       await generateDoses();
     } catch (e) {
-      emit(MedicationError(e.toString()));
+      _logger.e("Error generating doses: ${e.toString()}");
+      // No emitimos MedicationError para no bloquear la UI con un error de mantenimiento
     }
   }
 
@@ -181,9 +241,28 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     Emitter<MedicationState> emit,
   ) async {
     try {
-      final filePath = await exportMedications();
-      if (filePath != null) {
-        emit(MedicationExportSuccess('Datos exportados a:\n$filePath'));
+      final result = await exportMedications();
+      if (result != null) {
+        final filePath = result['filePath'];
+        final medicationsCount = result['medicationsCount'] as int;
+        final takenDosesCount = result['takenDosesCount'] as int;
+        final notTakenDosesCount = result['notTakenDosesCount'] as int;
+        final expiredDosesCount = result['expiredDosesCount'] as int;
+        final totalDosesExported = result['totalDosesExported'] as int;
+
+        emit(MedicationExportSuccess(
+          'Datos exportados a:\n$filePath\n'
+          'Medicamentos: $medicationsCount\n'
+          'Dosis tomadas: $takenDosesCount\n'
+          'Dosis desistidas: $notTakenDosesCount\n'
+          'Dosis pasadas: $expiredDosesCount\n'
+          'Total de dosis exportadas (no próximas): $totalDosesExported',
+          medicationsCount: medicationsCount,
+          takenDosesCount: takenDosesCount,
+          notTakenDosesCount: notTakenDosesCount,
+          expiredDosesCount: expiredDosesCount,
+          totalDosesExported: totalDosesExported,
+        ));
       } else {
         emit(const MedicationError('Exportación cancelada por el usuario.'));
       }
@@ -196,11 +275,29 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     ImportMedicationsEvent event,
     Emitter<MedicationState> emit,
   ) async {
+    emit(MedicationImportLoading());
     try {
-      await importMedications();
-      emit(const MedicationImportSuccess());
-      add(LoadMedications()); // Recargar los medicamentos para mostrar los datos importados.
+      final result = await importMedications();
+      if (result != null) {
+        final medicationsCount = result['medicationsCount'] as int;
+        final takenDosesCount = result['takenDosesCount'] as int;
+        final notTakenDosesCount = result['notTakenDosesCount'] as int;
+        final expiredDosesCount = result['expiredDosesCount'] as int;
+        final totalDosesImported = result['totalDosesImported'] as int;
+
+        emit(MedicationImportSuccess(
+          medicationsCount: medicationsCount,
+          takenDosesCount: takenDosesCount,
+          notTakenDosesCount: notTakenDosesCount,
+          expiredDosesCount: expiredDosesCount,
+          totalDosesImported: totalDosesImported,
+        ));
+        add(LoadMedications()); // Reload medications to update UI
+      } else {
+        emit(const MedicationError('Importación cancelada por el usuario.'));
+      }
     } catch (e) {
+      _logger.e("Error al importar: ${e.toString()}");
       emit(MedicationError('Error al importar: ${e.toString()}'));
     }
   }
@@ -211,7 +308,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   ) async {
     try {
       await deleteDose(event.id);
-      add(LoadPastDoses()); // Refresh past doses list
+      add(LoadPastDoses());
     } catch (e) {
       emit(MedicationError(e.toString()));
     }
@@ -223,9 +320,24 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   ) async {
     try {
       await deletePastDosesOlderThan(event.cutoff);
-      add(LoadPastDoses()); // Refresh past doses list
+      add(LoadPastDoses());
     } catch (e) {
       emit(MedicationError(e.toString()));
+    }
+  }
+
+  Future<void> _onMarkPastDosesAsNotTaken(
+    MarkPastDosesAsNotTakenEvent event,
+    Emitter<MedicationState> emit,
+  ) async {
+    try {
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      await markPastDosesAsNotTaken(yesterday);
+      add(GenerateDosesEvent());
+      add(LoadMedications());
+      emit(const PastDosesMarkedSuccess());
+    } catch (e) {
+      emit(MedicationError('Error al marcar dosis pasadas: ${e.toString()}'));
     }
   }
 }

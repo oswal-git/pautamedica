@@ -362,6 +362,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_repetitionType != RepetitionType.asNeeded) ...[
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -424,6 +425,8 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
             },
           ),
         const SizedBox(height: 24),
+        ],
+        if (_repetitionType != RepetitionType.asNeeded) ...[
         ListTile(
           title: Text(
               'Fecha de primera toma: ${_firstDoseDate != null ? DateFormat('dd/MM/yyyy').format(_firstDoseDate!) : 'No establecida'}'),
@@ -431,6 +434,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
           onTap: _pickFirstDoseDate,
         ),
         const SizedBox(height: 24),
+        ],
         const Text(
           'Frecuencia de la Toma',
           style: TextStyle(
@@ -445,6 +449,10 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
           onChanged: (value) {
             setState(() {
               _repetitionType = value!;
+              if (_repetitionType == RepetitionType.asNeeded) {
+                _timePickers.clear();
+                _schedules.clear();
+              }
             });
           },
           items: RepetitionType.values.map((type) {
@@ -458,7 +466,8 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
             border: OutlineInputBorder(),
           ),
         ),
-        if (_repetitionType != RepetitionType.none) ...[
+        if (_repetitionType != RepetitionType.none &&
+            _repetitionType != RepetitionType.asNeeded) ...[
           const SizedBox(height: 16),
           Row(
             children: [
@@ -523,6 +532,8 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         return 'Semanalmente';
       case RepetitionType.monthly:
         return 'Mensualmente';
+      case RepetitionType.asNeeded:
+        return 'A demanda';
     }
   }
 
@@ -534,6 +545,8 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
         return _repetitionInterval == 1 ? 'semana' : 'semanas';
       case RepetitionType.monthly:
         return _repetitionInterval == 1 ? 'mes' : 'meses';
+      case RepetitionType.asNeeded:
+        return '';
       default:
         return '';
     }
@@ -718,7 +731,7 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
       return;
     }
 
-    if (_timePickers.isEmpty) {
+    if (_repetitionType != RepetitionType.asNeeded && _timePickers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor agrega al menos un horario de toma'),
@@ -729,7 +742,9 @@ class _AddEditMedicationPageState extends State<AddEditMedicationPage> {
     }
 
     final now = DateTime.now();
-    _schedules = _timePickers.map((time) {
+    _schedules = _repetitionType == RepetitionType.asNeeded
+        ? <DateTime>[]
+        : _timePickers.map((time) {
       return DateTime(
         now.year,
         now.month,

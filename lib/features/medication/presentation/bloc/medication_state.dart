@@ -56,11 +56,60 @@ class MedicationError extends MedicationState {
 
 class MedicationExportSuccess extends MedicationState {
   final String message;
-  const MedicationExportSuccess(this.message);
+  final int medicationsCount;
+  final int takenDosesCount;
+  final int notTakenDosesCount;
+  final int expiredDosesCount;
+  final int totalDosesExported;
+
+  const MedicationExportSuccess(
+    this.message, {
+    required this.medicationsCount,
+    required this.takenDosesCount,
+    required this.notTakenDosesCount,
+    required this.expiredDosesCount,
+    required this.totalDosesExported,
+  });
+
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [
+        message,
+        medicationsCount,
+        takenDosesCount,
+        notTakenDosesCount,
+        expiredDosesCount,
+        totalDosesExported,
+      ];
 }
 
 class MedicationImportSuccess extends MedicationState {
-  const MedicationImportSuccess();
+  final int medicationsCount;
+  final int takenDosesCount;
+  final int notTakenDosesCount;
+  final int expiredDosesCount;
+  final int totalDosesImported;
+
+  const MedicationImportSuccess({
+    required this.medicationsCount,
+    required this.takenDosesCount,
+    required this.notTakenDosesCount,
+    required this.expiredDosesCount,
+    required this.totalDosesImported,
+  });
+
+  @override
+  List<Object?> get props => [
+        medicationsCount,
+        takenDosesCount,
+        notTakenDosesCount,
+        expiredDosesCount,
+        totalDosesImported
+      ];
 }
+
+class MedicationImportLoading extends MedicationState {}
+
+class PastDosesMarkedSuccess extends MedicationState {
+  const PastDosesMarkedSuccess();
+}
+

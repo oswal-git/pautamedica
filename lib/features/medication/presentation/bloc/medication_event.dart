@@ -22,6 +22,15 @@ class AddMedicationEvent extends MedicationEvent {
   List<Object?> get props => [medication];
 }
 
+class RecordMedicationDoseEvent extends MedicationEvent {
+  final Medication medication;
+
+  const RecordMedicationDoseEvent(this.medication);
+
+  @override
+  List<Object?> get props => [medication];
+}
+
 class UpdateMedicationEvent extends MedicationEvent {
   final Medication medication;
 
@@ -29,6 +38,15 @@ class UpdateMedicationEvent extends MedicationEvent {
 
   @override
   List<Object?> get props => [medication];
+}
+
+class ReorderMedicationsEvent extends MedicationEvent {
+  final List<Medication> medications;
+
+  const ReorderMedicationsEvent(this.medications);
+
+  @override
+  List<Object?> get props => [medications];
 }
 
 class DeleteMedicationEvent extends MedicationEvent {
@@ -79,3 +97,5 @@ class CleanPastDosesEvent extends MedicationEvent {
   @override
   List<Object?> get props => [cutoff];
 }
+
+class MarkPastDosesAsNotTakenEvent extends MedicationEvent {}

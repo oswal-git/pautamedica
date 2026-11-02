@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pautamedica/features/medication/domain/entities/dose_status.dart';
+import 'package:pautamedica/features/medication/domain/entities/repetition_type.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_event.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_state.dart';
@@ -84,9 +85,11 @@ class _PastDosesPageState extends State<PastDosesPage> {
                   final isMostRecent =
                       state.mostRecentDoseIds[dose.medicationId] == dose.id;
                   final medication = state.medicationsMap[dose.medicationId];
+                  final canUnmark = isMostRecent &&
+                      medication?.repetitionType != RepetitionType.asNeeded;
                   return Dismissible(
                     key: Key(dose.id.toString()),
-                    direction: isMostRecent
+                    direction: canUnmark
                         ? DismissDirection.horizontal
                         : DismissDirection.endToStart,
                     confirmDismiss: (direction) async {
@@ -115,7 +118,7 @@ class _PastDosesPageState extends State<PastDosesPage> {
                           },
                         );
                       } else if (direction == DismissDirection.startToEnd &&
-                          isMostRecent) {
+                          canUnmark) {
                         // Swipe left to unmark if possible
                         return await showDialog(
                           context: context,
@@ -150,7 +153,7 @@ class _PastDosesPageState extends State<PastDosesPage> {
                             .read<MedicationBloc>()
                             .add(DeleteDoseEvent(dose.id));
                       } else if (direction == DismissDirection.startToEnd &&
-                          isMostRecent) {
+                          canUnmark) {
                         // Swipe left to unmark
                         context.read<MedicationBloc>().add(
                               UpdateDoseStatusEvent(
@@ -161,7 +164,7 @@ class _PastDosesPageState extends State<PastDosesPage> {
                             );
                       }
                     },
-                    background: isMostRecent
+                    background: canUnmark
                         ? Container(
                             color: Colors.blue,
                             alignment: Alignment.centerLeft,
@@ -185,7 +188,7 @@ class _PastDosesPageState extends State<PastDosesPage> {
                             .read<MedicationBloc>()
                             .add(DeleteDoseEvent(dose.id));
                       },
-                      onUnmark: isMostRecent
+                      onUnmark: canUnmark
                           ? () {
                               context.read<MedicationBloc>().add(
                                     UpdateDoseStatusEvent(

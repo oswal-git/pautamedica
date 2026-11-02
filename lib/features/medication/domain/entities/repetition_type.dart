@@ -3,4 +3,5 @@ enum RepetitionType {
   daily,
   weekly,
   monthly,
+  asNeeded,
 }

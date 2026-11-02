@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert'; // Added for jsonEncode/jsonDecode
+import 'package:archive/archive.dart';
 import 'package:collection/collection.dart';
 import 'package:pautamedica/features/medication/data/file_service.dart';
 import 'package:pautamedica/features/medication/data/notification_service.dart';
@@ -34,7 +35,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       final path = join(documentsDirectory.path, 'medications.db');
       return await openDatabase(
         path,
-        version: 7, // Increment version for description field
+        version: 8,
         onCreate: (db, version) async {
           await _createMedicationsTable(db);
           await _createDosesTable(db);
@@ -63,6 +64,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
             await db.execute(
                 'ALTER TABLE $_medicationsTableName ADD COLUMN description TEXT NOT NULL DEFAULT ""');
           }
+          if (oldVersion < 8) {
+            await db.execute(
+                'ALTER TABLE $_medicationsTableName ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0');
+            await db.rawUpdate(
+                'UPDATE $_medicationsTableName SET sortOrder = rowid');
+          }
         },
       );
     } catch (e) {
@@ -85,7 +92,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
         repetitionType TEXT NOT NULL,
         repetitionInterval INTEGER,
         indefinite INTEGER NOT NULL,
-        endDate TEXT
+        endDate TEXT,
+        sortOrder INTEGER NOT NULL DEFAULT 0
       )
     ''');
   }
@@ -107,9 +115,15 @@ class MedicationRepositoryImpl implements MedicationRepository {
   Future<List<Medication>> getAllMedications() async {
     try {
       final db = await database;
-      final List<Map<String, dynamic>> maps =
-          await db.query(_medicationsTableName);
-      final medications = maps.map((map) => _mapToMedication(map)).toList();
+      final List<Map<String, dynamic>> maps = await db.query(
+        _medicationsTableName,
+        orderBy: 'sortOrder ASC, rowid ASC',
+      );
+
+      final List<Medication> medications = [];
+      for (final map in maps) {
+        medications.add(await _mapToMedicationAsync(map));
+      }
       return medications;
     } catch (e) {
       _logger.i('Repository: Error en getAllMedications: $e');
@@ -120,9 +134,16 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   Future<Medication> saveMedication(Medication medication) async {
     final db = await database;
+    final maxOrder = Sqflite.firstIntValue(await db.rawQuery(
+          'SELECT MAX(sortOrder) FROM $_medicationsTableName',
+        )) ??
+        -1;
+    final map = await _medicationToMap(
+      medication.copyWith(sortOrder: maxOrder + 1),
+    );
     await db.insert(
       _medicationsTableName,
-      _medicationToMap(medication),
+      map,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     return medication;
@@ -131,29 +152,45 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   Future<void> deleteMedication(String id) async {
     final db = await database;
-    final List<Map<String, dynamic>> result = await db.query(
+    // Query the medication to get its image paths before deleting
+    final List<Map<String, dynamic>> medicationMaps = await db.query(
       _medicationsTableName,
       where: 'id = ?',
       whereArgs: [id],
     );
 
-    if (result.isNotEmpty) {
-      final imagePathsJson = result.first['imagePaths'] as String;
-      final imagePaths = (jsonDecode(imagePathsJson) as List).cast<String>();
-      for (final imagePath in imagePaths) {
-        final file = File(imagePath);
+    if (medicationMaps.isNotEmpty) {
+      final imagePathsJson = medicationMaps.first['imagePaths'] as String;
+      final imageFileNames =
+          (jsonDecode(imagePathsJson) as List).cast<String>();
+      final docsDir = await getApplicationDocumentsDirectory();
+
+      for (final fileName in imageFileNames) {
+        final absolutePath = join(docsDir.path, fileName);
+        final file = File(absolutePath);
         if (await file.exists()) {
-          await file.delete();
+          try {
+            await file.delete();
+            _logger.i('Repository: Deleted image file: $absolutePath');
+          } catch (e) {
+            _logger
+                .e('Repository: Error deleting image file $absolutePath: $e');
+          }
         }
       }
+    } else {
+      _logger.w(
+          'Repository: Medication with ID $id not found for image deletion.');
     }
 
+    // Delete the medication record from the database
     await db.delete(
       _medicationsTableName,
       where: 'id = ?',
       whereArgs: [id],
     );
 
+    // Delete associated doses
     await db.delete(
       _dosesTableName,
       where: 'medicationId = ?',
@@ -164,22 +201,93 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   Future<Medication> updateMedication(Medication medication) async {
     final db = await database;
+    final map =
+        await _medicationToMap(medication); // Await the async map conversion
     await db.update(
       _medicationsTableName,
-      _medicationToMap(medication),
+      map,
       where: 'id = ?',
       whereArgs: [medication.id],
     );
     return medication;
   }
 
-  Map<String, dynamic> _medicationToMap(Medication medication) {
+  @override
+  Future<void> reorderMedications(List<String> medicationIds) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+      for (var index = 0; index < medicationIds.length; index++) {
+        batch.update(
+          _medicationsTableName,
+          {'sortOrder': index},
+          where: 'id = ?',
+          whereArgs: [medicationIds[index]],
+        );
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  // Helper function to ensure an image file is copied to the app's persistent documents directory
+  // if it's not already there, and returns its persistent absolute path.
+  Future<String> _ensureImageIsPersistent(String imagePath) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final fileName = basename(imagePath);
+    final persistentFilePath = join(docsDir.path, fileName);
+    final originalFile = File(imagePath);
+
+    // If the imagePath is already within the app's documents directory,
+    // and the file exists, then it's already persistent.
+    if (imagePath.startsWith(docsDir.path) && await originalFile.exists()) {
+      return imagePath;
+    }
+
+    // If the original file exists (e.g., a temporary file from image_picker)
+    // copy it to the persistent location.
+    if (await originalFile.exists()) {
+      try {
+        await originalFile.copy(persistentFilePath);
+        _logger.i(
+            'Repository: Copied image from $imagePath to $persistentFilePath');
+        return persistentFilePath;
+      } catch (e) {
+        _logger.e(
+            'Repository: Error copying image $imagePath to $persistentFilePath: $e');
+        // If copying fails, return the original path, which might be temporary or invalid.
+        // This might lead to a broken image link.
+        return imagePath;
+      }
+    } else {
+      _logger.w(
+          'Repository: Original image file not found at $imagePath. Cannot copy.');
+      // If the original file doesn't exist, it's likely a temporary file that was cleaned up.
+      // Return an empty string or null to indicate a broken path, or filter it out.
+      // For now, returning an empty string to avoid issues with List<String> type.
+      return ''; // Indicate that the image is not available.
+    }
+  }
+
+  // Make _medicationToMap async to handle image persistence
+  Future<Map<String, dynamic>> _medicationToMap(Medication medication) async {
+    final List<String> persistentImagePaths = [];
+    for (final path in medication.imagePaths) {
+      final newPath = await _ensureImageIsPersistent(path);
+      if (newPath.isNotEmpty) {
+        // Only add if the path is valid (not empty string from error)
+        persistentImagePaths.add(newPath);
+      }
+    }
+
     return {
       'id': medication.id,
       'name': medication.name,
       'description': medication.description,
       'posology': medication.posology,
-      'imagePaths': jsonEncode(medication.imagePaths), // Changed
+      // Store only the basenames of the persistent paths
+      'imagePaths': jsonEncode(
+        persistentImagePaths.map((path) => basename(path)).toList(),
+      ),
       'schedules':
           medication.schedules.map((dt) => dt.toIso8601String()).join(','),
       'createdAt': medication.createdAt.toIso8601String(),
@@ -188,10 +296,21 @@ class MedicationRepositoryImpl implements MedicationRepository {
       'repetitionInterval': medication.repetitionInterval,
       'indefinite': medication.indefinite ? 1 : 0,
       'endDate': medication.endDate?.toIso8601String(),
+      'sortOrder': medication.sortOrder,
     };
   }
 
-  Medication _mapToMedication(Map<String, dynamic> map) {
+  // _mapToMedicationAsync already handles reconstructing absolute paths, no change needed here.
+  // It is called by getAllMedications.
+  Future<Medication> _mapToMedicationAsync(Map<String, dynamic> map) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final List<dynamic> relativePaths = jsonDecode(map['imagePaths'] as String);
+
+    // Reconstruimos la ruta absoluta dinámica para el dispositivo actual
+    final absolutePaths = relativePaths
+        .map((fileName) => join(docsDir.path, fileName as String))
+        .toList();
+
     final schedulesString = map['schedules'] as String;
     final schedules = schedulesString
         .split(',')
@@ -204,8 +323,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       name: map['name'] as String,
       description: map['description'] as String,
       posology: map['posology'] as String,
-      imagePaths:
-          (jsonDecode(map['imagePaths']) as List).cast<String>(), // Changed
+      imagePaths: absolutePaths,
       schedules: schedules,
       createdAt: DateTime.parse(map['createdAt'] as String),
       firstDoseDate: map['firstDoseDate'] != null
@@ -221,6 +339,37 @@ class MedicationRepositoryImpl implements MedicationRepository {
       indefinite: (map['indefinite'] as num? ?? 0) == 1,
       endDate: map['endDate'] != null
           ? DateTime.parse(map['endDate'] as String)
+          : null,
+      sortOrder: (map['sortOrder'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  // Make _mapToDose async to reconstruct absolute paths for doses
+  Future<Dose> _mapToDoseAsync(Map<String, dynamic> map) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final List<dynamic> relativePaths =
+        jsonDecode(map['medicationImagePaths'] as String);
+
+    final absolutePaths = relativePaths
+        .map((fileName) => join(docsDir.path, fileName))
+        .toList()
+        .cast<String>();
+
+    return Dose(
+      id: map['id'] as String,
+      medicationId: map['medicationId'] as String,
+      medicationName: map['medicationName'] as String,
+      medicationImagePaths: absolutePaths, // Now absolute paths
+      time: DateTime.parse(map['time'] as String),
+      status: DoseStatus.values.firstWhere(
+        (e) =>
+            e.toString().split('.').last ==
+            (map['status'] as String? ?? 'upcoming'),
+        orElse: () => DoseStatus.upcoming,
+      ),
+      notificationSentCount: map['notificationSentCount'] as int? ?? 0,
+      markedAt: map['markedAt'] != null
+          ? DateTime.parse(map['markedAt'] as String)
           : null,
     );
   }
@@ -249,11 +398,13 @@ class MedicationRepositoryImpl implements MedicationRepository {
         d.notificationSentCount
       FROM $_dosesTableName d
       INNER JOIN $_medicationsTableName m ON d.medicationId = m.id
-      WHERE d.status = ? OR d.status = ?
+      WHERE (d.status = ? OR d.status = ?)
+        AND m.repetitionType != ?
       ORDER BY d.time ASC
-    ''', ['upcoming', 'expired']);
+    ''', ['upcoming', 'expired', 'asNeeded']);
 
-    final allDoses = maps.map((map) => _mapToDose(map)).toList();
+    final allDoses = await Future.wait(
+        maps.map((map) => _mapToDoseAsync(map))); // Await all dose mappings
     final Map<String, List<Dose>> dosesByMedication = {};
 
     for (final dose in allDoses) {
@@ -305,7 +456,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
       ORDER BY d.time DESC
     ''', ['taken', 'notTaken']);
 
-    final List<Dose> pastDoses = maps.map((map) => _mapToDose(map)).toList();
+    final pastDoses = await Future.wait(
+        maps.map((map) => _mapToDoseAsync(map))); // Await all dose mappings
 
     final Map<String, String> mostRecentDoseIds = {};
     final Set<String> processedMedicationIds = {};
@@ -333,6 +485,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
   }
 
   @override
+  Future<void> addDose(Dose dose) async {
+    final db = await database;
+    await db.insert(_dosesTableName, _doseToMap(dose));
+  }
+
+  @override
   Future<void> deleteDose(String id) async {
     final db = await database;
     await db.delete(
@@ -349,14 +507,14 @@ class MedicationRepositoryImpl implements MedicationRepository {
     await notificationService.init();
 
     // Get all upcoming doses for this medication
-    final List<Map<String, dynamic>> upcomingDoses = await db.query(
+    final List<Map<String, dynamic>> upcomingDosesMaps = await db.query(
       _dosesTableName,
       where: 'medicationId = ? AND status = ?',
       whereArgs: [medicationId, 'upcoming'],
     );
 
     // Cancel notifications for these doses
-    for (final doseMap in upcomingDoses) {
+    for (final doseMap in upcomingDosesMaps) {
       final doseId = doseMap['id'] as String;
       await notificationService.cancelNotification(doseId);
     }
@@ -368,13 +526,44 @@ class MedicationRepositoryImpl implements MedicationRepository {
       whereArgs: [medicationId, 'upcoming'],
     );
 
-    // Regenerate doses for this medication
     final medications = await getAllMedications();
     final medication = medications.firstWhere((m) => m.id == medicationId);
+    if (medication.repetitionType == RepetitionType.asNeeded) {
+      await db.delete(
+        _dosesTableName,
+        where: 'medicationId = ? AND status = ?',
+        whereArgs: [medicationId, 'expired'],
+      );
+      await rescheduleAllNotifications();
+      return;
+    }
+
+    // Regenerate doses for this medication
     final batch = db.batch();
 
     final now = DateTime.now();
-    final sixMonthsFromNow = now.add(const Duration(days: 185));
+
+    // Calculamos un horizonte dinámico según el tipo de repetición
+    DateTime targetDate;
+    switch (medication.repetitionType) {
+      case RepetitionType.daily:
+        targetDate = now.add(const Duration(days: 30)); // 1 mes para diarios
+        break;
+      case RepetitionType.weekly:
+        targetDate =
+            now.add(const Duration(days: 90)); // ~3 meses para semanales
+        break;
+      case RepetitionType.monthly:
+        // Generamos 3 ciclos (si es trimestral, serían 9 meses)
+        final interval = medication.repetitionInterval ?? 1;
+        targetDate = DateTime(now.year, now.month + (interval * 3), now.day);
+        break;
+      case RepetitionType.none:
+      // ignore: unreachable_switch_default
+      default:
+        targetDate = now
+            .add(const Duration(days: 7)); // Margen pequeño para tomas únicas
+    }
 
     final startDate = medication.firstDoseDate != null &&
             medication.firstDoseDate!.isAfter(medication.createdAt)
@@ -405,14 +594,18 @@ class MedicationRepositoryImpl implements MedicationRepository {
               time: doseTime,
               status: DoseStatus.upcoming,
             );
-            batch.insert(_dosesTableName, _doseToMap(dose));
+            batch.insert(
+              _dosesTableName,
+              _doseToMap(dose),
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
           }
         }
       }
     } else {
       var currentDate = startDate;
 
-      while (currentDate.isBefore(sixMonthsFromNow)) {
+      while (currentDate.isBefore(targetDate)) {
         if (medication.endDate != null &&
             currentDate.isAfter(medication.endDate!)) {
           break;
@@ -442,7 +635,11 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 time: doseTime,
                 status: DoseStatus.upcoming,
               );
-              batch.insert(_dosesTableName, _doseToMap(dose));
+              batch.insert(
+                _dosesTableName,
+                _doseToMap(dose),
+                conflictAlgorithm: ConflictAlgorithm.replace,
+              );
             }
           }
         }
@@ -491,11 +688,13 @@ class MedicationRepositoryImpl implements MedicationRepository {
       FROM $_dosesTableName d
       INNER JOIN $_medicationsTableName m ON d.medicationId = m.id
       WHERE d.status = ? AND d.time > ?
+        AND m.repetitionType != ?
       ORDER BY d.time ASC
       LIMIT 50
-    ''', ['upcoming', now.toIso8601String()]);
+    ''', ['upcoming', now.toIso8601String(), 'asNeeded']);
 
-    final upcomingDoses = maps.map((map) => _mapToDose(map)).toList();
+    final upcomingDoses = await Future.wait(
+        maps.map((map) => _mapToDoseAsync(map))); // Await here
 
     for (final dose in upcomingDoses) {
       await notificationService.scheduleNotification(
@@ -505,8 +704,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
       );
     }
 
-    _logger.i(
-        "Repository: Rescheduled ${upcomingDoses.length} notifications.");
+    _logger.i("Repository: Rescheduled ${upcomingDoses.length} notifications.");
   }
 
   @override
@@ -516,9 +714,35 @@ class MedicationRepositoryImpl implements MedicationRepository {
     final batch = db.batch();
 
     final now = DateTime.now();
-    final sixMonthsFromNow = now.add(const Duration(days: 185));
 
     for (final medication in medications) {
+      if (medication.repetitionType == RepetitionType.asNeeded) {
+        await db.delete(
+          _dosesTableName,
+          where: 'medicationId = ? AND (status = ? OR status = ?)',
+          whereArgs: [medication.id, 'upcoming', 'expired'],
+        );
+        continue;
+      }
+      // Horizonte dinámico por medicamento
+      DateTime targetDate;
+      switch (medication.repetitionType) {
+        case RepetitionType.daily:
+          targetDate = now.add(const Duration(days: 30));
+          break;
+        case RepetitionType.weekly:
+          targetDate = now.add(const Duration(days: 90));
+          break;
+        case RepetitionType.monthly:
+          final interval = medication.repetitionInterval ?? 1;
+          targetDate = DateTime(now.year, now.month + (interval * 3), now.day);
+          break;
+        case RepetitionType.none:
+        // ignore: unreachable_switch_default
+        default:
+          targetDate = now.add(const Duration(days: 7));
+      }
+
       final startDate = medication.firstDoseDate != null &&
               medication.firstDoseDate!.isAfter(medication.createdAt)
           ? medication.firstDoseDate!
@@ -548,14 +772,18 @@ class MedicationRepositoryImpl implements MedicationRepository {
                 time: doseTime,
                 status: DoseStatus.upcoming,
               );
-              batch.insert(_dosesTableName, _doseToMap(dose));
+              batch.insert(
+                _dosesTableName,
+                _doseToMap(dose),
+                conflictAlgorithm: ConflictAlgorithm.replace,
+              );
             }
           }
         }
       } else {
         var currentDate = startDate;
 
-        while (currentDate.isBefore(sixMonthsFromNow)) {
+        while (currentDate.isBefore(targetDate)) {
           if (medication.endDate != null &&
               currentDate.isAfter(medication.endDate!)) {
             break;
@@ -585,7 +813,11 @@ class MedicationRepositoryImpl implements MedicationRepository {
                   time: doseTime,
                   status: DoseStatus.upcoming,
                 );
-                batch.insert(_dosesTableName, _doseToMap(dose));
+                batch.insert(
+                  _dosesTableName,
+                  _doseToMap(dose),
+                  conflictAlgorithm: ConflictAlgorithm.replace,
+                );
               }
             }
           }
@@ -608,12 +840,12 @@ class MedicationRepositoryImpl implements MedicationRepository {
 
     await batch.commit(noResult: true);
 
-    // Delete doses older than 6 months
-    final sixMonthsAgo = now.subtract(const Duration(days: 185));
+    // Mantenemos la limpieza de dosis muy antiguas (ej: más de 3 meses atrás)
+    final threeMonthsAgo = now.subtract(const Duration(days: 90));
     await db.delete(
       _dosesTableName,
       where: 'time < ?',
-      whereArgs: [sixMonthsAgo.toIso8601String()],
+      whereArgs: [threeMonthsAgo.toIso8601String()],
     );
 
     await rescheduleAllNotifications();
@@ -630,64 +862,183 @@ class MedicationRepositoryImpl implements MedicationRepository {
     };
   }
 
-  Dose _mapToDose(Map<String, dynamic> map) {
-    return Dose(
-      id: map['id'] as String,
-      medicationId: map['medicationId'] as String,
-      medicationName: map['medicationName'] as String,
-      medicationImagePaths:
-          (jsonDecode(map['medicationImagePaths']) as List).cast<String>(),
-      time: DateTime.parse(map['time'] as String),
-      status: DoseStatus.values.firstWhere(
-        (e) =>
-            e.toString().split('.').last ==
-            (map['status'] as String? ?? 'upcoming'),
-        orElse: () => DoseStatus.upcoming,
-      ),
-      notificationSentCount: map['notificationSentCount'] as int? ?? 0,
-      markedAt: map['markedAt'] != null
-          ? DateTime.parse(map['markedAt'] as String)
-          : null, // New field
-    );
-  }
-
   @override
-  Future<String?> exportMedications() async {
+  Future<Map<String, dynamic>?> exportMedications() async {
     final db = await database;
+    final medications =
+        await getAllMedications(); // medications will have absolute paths
     final medicationsMaps = await db.query(_medicationsTableName);
-    final dosesMaps = await db.query(_dosesTableName);
+
+    final takenDoses = await db
+        .query(_dosesTableName, where: 'status = ?', whereArgs: ['taken']);
+    final notTakenDoses = await db
+        .query(_dosesTableName, where: 'status = ?', whereArgs: ['notTaken']);
+    final expiredDoses = await db
+        .query(_dosesTableName, where: 'status = ?', whereArgs: ['expired']);
+
+    final allExportedDoses = await db.query(
+      _dosesTableName,
+      where: 'status != ?',
+      whereArgs: ['upcoming'],
+    );
 
     final dataToExport = {
       'medications': medicationsMaps,
-      'doses': dosesMaps,
+      'doses': allExportedDoses,
+      'stats': {
+        'medicationsCount': medicationsMaps.length,
+        'takenDosesCount': takenDoses.length,
+        'notTakenDosesCount': notTakenDoses.length,
+        'expiredDosesCount': expiredDoses.length,
+        'totalDosesExported': allExportedDoses.length,
+      }
     };
 
     final jsonString = jsonEncode(dataToExport);
-    return await _fileService.saveJsonToFile(jsonString);
+    // No guardamos el JSON por separado, irá dentro del ZIP
+
+    // Creamos el archivo ZIP
+    final archive = Archive();
+
+    // 1. Añadimos el JSON de datos
+    final jsonBytes = utf8.encode(jsonString);
+    archive.addFile(ArchiveFile('data.json', jsonBytes.length, jsonBytes));
+
+    // 2. Añadimos todas las imágenes físicas referenciadas
+    for (final medication in medications) {
+      for (final imagePath in medication.imagePaths) {
+        // These are absolute paths
+        final file = File(imagePath);
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+          archive.addFile(ArchiveFile(
+              'images/${basename(imagePath)}', bytes.length, bytes));
+        }
+      }
+    }
+
+    // Codificamos y guardamos
+
+    final zipData = ZipEncoder().encode(archive);
+    if (zipData == null) return null;
+    final filePath = await _fileService.saveJsonToFile(base64Encode(zipData));
+
+    if (filePath != null) {
+      return {
+        'filePath': filePath,
+        'medicationsCount': medicationsMaps.length,
+        'takenDosesCount': takenDoses.length,
+        'notTakenDosesCount': notTakenDoses.length,
+        'expiredDosesCount': expiredDoses.length,
+        'totalDosesExported': allExportedDoses.length,
+      };
+    }
+    return null;
   }
 
   @override
-  Future<void> importMedications() async {
+  Future<Map<String, dynamic>?> importMedications() async {
+    final notificationService = NotificationService();
+    await notificationService.init();
+    await notificationService.cancelAllNotifications();
+
     final path = await _fileService.pickJsonFile();
     if (path != null) {
-      final file = File(path);
-      final content = await file.readAsString();
+      // Leemos el archivo como string base64 y lo decodificamos a bytes binarios
+      final base64String = await File(path).readAsString();
+      final zipBytes = base64Decode(base64String);
+      final archive = ZipDecoder().decodeBytes(zipBytes);
+
+      final jsonFile = archive.findFile('data.json');
+      if (jsonFile == null) {
+        _logger.e("Archivo de datos no encontrado en el backup");
+        throw Exception("Archivo de datos no encontrado en el backup");
+      }
+
+      final content = utf8.decode(jsonFile.content);
       final Map<String, dynamic> jsonData = jsonDecode(content);
 
-      final List<dynamic> medications = jsonData['medications'] ?? [];
-      final List<dynamic> doses = jsonData['doses'] ?? [];
+      final List<dynamic> medicationsToImport = jsonData['medications'] ?? [];
+      final List<dynamic> dosesToImport = jsonData['doses'] ?? [];
 
       final db = await database;
-      await db.delete(_medicationsTableName);
+      final docsDir = await getApplicationDocumentsDirectory();
+
+      // Antes de borrar la base de datos, eliminamos físicamente las imágenes actuales
+      // para evitar que se queden archivos huérfanos en el dispositivo.
+      final currentMedications = await db.query(_medicationsTableName);
+      for (final medMap in currentMedications) {
+        try {
+          final imagePathsJson = medMap['imagePaths'] as String?;
+          if (imagePathsJson != null) {
+            final imageFileNames =
+                (jsonDecode(imagePathsJson) as List).cast<String>();
+            for (final fileName in imageFileNames) {
+              final file = File(
+                  join(docsDir.path, fileName)); // Reconstruct absolute path
+              if (await file.exists()) {
+                await file.delete();
+              }
+            }
+          }
+        } catch (e) {
+          _logger.e("Error al limpiar imagen previa a importación: $e");
+        }
+      }
+
+      // 1. Extraemos las imágenes físicas del ZIP al almacenamiento local
+      for (final file in archive) {
+        if (file.name.startsWith('images/') && file.isFile) {
+          final fileName = basename(file.name);
+          final outFile = File(join(docsDir.path, fileName));
+          await outFile.writeAsBytes(file.content as List<int>);
+        }
+      }
+
+      // 2. Limpiamos las tablas con DELETE (seguro con el singleton de _database).
+      //    No usamos DROP+CREATE: invalida el schema cacheado en la instancia
+      //    singleton y provoca UNIQUE constraint en la segunda importacion.
       await db.delete(_dosesTableName);
-      for (final medication in medications) {
-        await db.insert(
-            _medicationsTableName, medication as Map<String, dynamic>);
+      await db.delete(_medicationsTableName);
+
+      _logger.i(
+          'Import: Tablas limpias. Insertando ${medicationsToImport.length} medications y ${dosesToImport.length} doses');
+
+      // 3. Insertamos los registros en un batch para mayor velocidad y atomicidad
+      final batch = db.batch();
+      for (final medication in medicationsToImport) {
+        batch.insert(_medicationsTableName, medication as Map<String, dynamic>,
+            conflictAlgorithm: ConflictAlgorithm.replace);
       }
-      for (final dose in doses) {
-        await db.insert(_dosesTableName, dose as Map<String, dynamic>);
+      for (final dose in dosesToImport) {
+        batch.insert(_dosesTableName, dose as Map<String, dynamic>,
+            conflictAlgorithm: ConflictAlgorithm.replace);
       }
+      await batch.commit(noResult: true);
+
+      // After import, get the counts for the imported data
+      final importedMedicationsCount = Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM $_medicationsTableName'));
+      final importedDosesCount = Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM $_dosesTableName'));
+      final importedTakenDosesCount = Sqflite.firstIntValue(await db.rawQuery(
+          "SELECT COUNT(*) FROM $_dosesTableName WHERE status = 'taken'"));
+      final importedNotTakenDosesCount = Sqflite.firstIntValue(await db.rawQuery(
+          "SELECT COUNT(*) FROM $_dosesTableName WHERE status = 'notTaken'"));
+      final importedExpiredDosesCount = Sqflite.firstIntValue(await db.rawQuery(
+          "SELECT COUNT(*) FROM $_dosesTableName WHERE status = 'expired'"));
+
+      await generateDoses();
+
+      return {
+        'medicationsCount': importedMedicationsCount,
+        'takenDosesCount': importedTakenDosesCount,
+        'notTakenDosesCount': importedNotTakenDosesCount,
+        'expiredDosesCount': importedExpiredDosesCount,
+        'totalDosesImported': importedDosesCount,
+      };
     }
+    return null;
   }
 
   @override
@@ -697,6 +1048,28 @@ class MedicationRepositoryImpl implements MedicationRepository {
       _dosesTableName,
       where: 'markedAt < ? AND (status = ? OR status = ?)',
       whereArgs: [cutoff.toIso8601String(), 'taken', 'notTaken'],
+    );
+  }
+
+  @override
+  Future<void> markPastDosesAsNotTaken(DateTime cutoff) async {
+    final db = await database;
+    final now = DateTime.now();
+    await db.update(
+      _dosesTableName,
+      {
+        'status': 'notTaken',
+        'markedAt': now.toIso8601String(),
+      },
+      where:
+          'time < ? AND (status = ? OR status = ? OR status = ? OR status = ? OR status = ? )',
+      whereArgs: [
+        cutoff.toIso8601String(),
+        'expired',
+        'upcoming',
+        'taken',
+        'notTaken',
+      ],
     );
   }
 }

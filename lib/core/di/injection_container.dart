@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:pautamedica/features/medication/data/repositories/medication_repository_impl.dart';
 import 'package:pautamedica/features/medication/domain/repositories/medication_repository.dart';
 import 'package:pautamedica/features/medication/domain/usecases/add_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/add_dose.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_dose.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_medication.dart';
 import 'package:pautamedica/features/medication/domain/usecases/delete_past_doses_older_than.dart';
@@ -12,8 +13,10 @@ import 'package:pautamedica/features/medication/domain/usecases/get_past_doses.d
 import 'package:pautamedica/features/medication/domain/usecases/get_upcoming_doses.dart';
 import 'package:pautamedica/features/medication/domain/usecases/import_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/regenerate_doses_for_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/reorder_medications.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_dose_status.dart';
 import 'package:pautamedica/features/medication/domain/usecases/update_medication.dart';
+import 'package:pautamedica/features/medication/domain/usecases/mark_past_doses_as_not_taken.dart';
 import 'package:pautamedica/features/medication/presentation/bloc/medication_bloc.dart';
 
 final sl = GetIt.instance;
@@ -29,6 +32,8 @@ Future<void> init() async {
     () => MedicationBloc(
       getMedications: sl(),
       addMedication: sl(),
+      addDose: sl(),
+      reorderMedications: sl(),
       updateMedication: sl(),
       deleteMedication: sl(),
       getUpcomingDoses: sl(),
@@ -40,12 +45,15 @@ Future<void> init() async {
       importMedications: sl(),
       deleteDose: sl(),
       deletePastDosesOlderThan: sl(),
+      markPastDosesAsNotTaken: sl(),
     ),
   );
 
   // Use cases
   sl.registerLazySingleton(() => GetMedications(sl()));
   sl.registerLazySingleton(() => AddMedication(sl()));
+  sl.registerLazySingleton(() => AddDose(sl()));
+  sl.registerLazySingleton(() => ReorderMedications(sl()));
   sl.registerLazySingleton(() => UpdateMedication(sl()));
   sl.registerLazySingleton(() => DeleteMedication(sl()));
   sl.registerLazySingleton(() => GetUpcomingDoses(sl()));
@@ -57,4 +65,5 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ImportMedications(sl()));
   sl.registerLazySingleton(() => DeleteDose(sl()));
   sl.registerLazySingleton(() => DeletePastDosesOlderThan(sl()));
+  sl.registerLazySingleton(() => MarkPastDosesAsNotTaken(sl()));
 }
